@@ -10,9 +10,9 @@ from PyQt5.QtWidgets import QPlainTextEdit
 from PyQt5.QtCore import Qt
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 
-class Mescal(QtWidgets.QMainWindow):
+class SerialMonitor(QtWidgets.QMainWindow):
     def __init__(self):
-        super(Mescal, self).__init__()
+        super(SerialMonitor, self).__init__()
         self.port = QSerialPort()
         self.serialDataView = SerialDataView(self)
         self.serialSendView = SerialSendView(self)
@@ -203,6 +203,6 @@ class ToolBar(QtWidgets.QToolBar):
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    window = Mescal()
+    window = SerialMonitor()
     window.show()
     app.exec()

@@ -6,43 +6,35 @@ import sys
 import math
 import re
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QPlainTextEdit
+from PyQt5.QtWidgets import QPlainTextEdit, QTabWidget, QVBoxLayout, QGridLayout, QGroupBox
 from PyQt5.QtCore import Qt
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 
 class Mescal(QtWidgets.QMainWindow):
     def __init__(self):
         super(Mescal, self).__init__()
-        self.port = QSerialPort()
-        self.serialDataView = SerialDataView(self)
-        self.serialSendView = SerialSendView(self)
 
-        self.setCentralWidget( QtWidgets.QWidget(self) )
-        layout = QtWidgets.QVBoxLayout( self.centralWidget() )
-        layout.addWidget(self.serialDataView)
-        layout.addWidget(self.serialSendView)
-        layout.setContentsMargins(3, 3, 3, 3)
-        self.setWindowTitle('Serial Monitor')
+        self.port = QSerialPort()
+
         self.setMinimumWidth(800)
+        self.setMinimumHeight(300)
+
+        self.tabWidget = QtWidgets.QTabWidget()
+        # sets the tabWidget as the central widget inside the QMainWindow
+        self.setCentralWidget(self.tabWidget)
 
         self.payload = ''
-
-        # self.keyPressEvent = self.keyPressEvent
-
-        ### Tool Bar ###
-        self.toolBar = ToolBar(self)
-        self.addToolBar(self.toolBar)
 
         ### Status Bar ###
         self.setStatusBar( QtWidgets.QStatusBar(self) )
         self.statusText = QtWidgets.QLabel(self)
         self.statusBar().addWidget( self.statusText )
         
-        ### Signal Connect ###
-        self.toolBar.portOpenButton.clicked.connect(self.portOpen)
-        self.toolBar.portRefreshButton.clicked.connect(self.portRefresh)
-        self.serialSendView.serialSendSignal.connect(self.sendFromPort)
-        self.port.readyRead.connect(self.readFromPort)
+        ### Tabs ###
+        self.tab_first = FirstTab()
+        self.tabWidget.addTab(self.tab_first,"Port")
+        self.tab_second = SecondTab()
+        self.tabWidget.addTab(self.tab_second,"Tab 2")
 
     def keyPressEvent(self, e):
         print("event", e)
@@ -51,6 +43,34 @@ class Mescal(QtWidgets.QMainWindow):
             print(' return')
         elif e.key() == Qt.Key_Enter :   
             print(' enter')
+
+class FirstTab(QtWidgets.QMainWindow):
+
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+
+        layout = QGridLayout()
+        self.setLayout(layout)
+
+        self.port.close()
+
+        groupbox = QGroupBox("GroupBox Example1")
+        layout.addWidget(groupbox)
+
+        ### Tool Bar ###
+        self.toolBar = ToolBar(self)
+        self.addToolBar(self.toolBar)
+
+        # Layout manager QVBox (vertical)
+        vbox = QVBoxLayout()
+        groupbox.setLayout(vbox)
+
+        ### Signal Connect ###
+        self.toolBar.portOpenButton.clicked.connect(self.portOpen)
+        self.toolBar.portRefreshButton.clicked.connect(self.portRefresh)
 
     def portOpen(self, flag):
         if flag:
@@ -105,6 +125,37 @@ class Mescal(QtWidgets.QMainWindow):
         self.port.write( text.encode() )
         self.payload = ''
         self.serialDataView.appendSerialText( text, QtGui.QColor(0, 0, 255) )
+
+
+class SecondTab(QtWidgets.QWidget):
+
+    def __init__(self):
+        super().__init__()
+
+        self.initUI()
+
+    def initUI(self):
+
+        self.setWindowTitle("Groupbox")
+        layout = QGridLayout()
+        self.setLayout(layout)
+
+        groupbox = QGroupBox("GroupBox Example2")
+        # groupbox.setCheckable(True)
+        layout.addWidget(groupbox)
+
+        # Layout manager QVBox (vertical)
+        vbox = QVBoxLayout()
+        groupbox.setLayout(vbox)
+
+        # radiobutton = QRadioButton("Radiobutton 1")
+        # vbox.addWidget(radiobutton)
+
+        # textEdit_input = QTextEdit()
+        # vbox.addWidget(textEdit_input)
+
+        # textEdit_output = QTextEdit()
+        # vbox.addWidget(textEdit_output)
 
 class SerialDataView(QtWidgets.QWidget):
     def __init__(self, parent):
