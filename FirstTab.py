@@ -1,4 +1,5 @@
 import re
+from Timer import Timer
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QPlainTextEdit, QTabWidget, QVBoxLayout, QGridLayout, QGroupBox
 from PyQt5.QtCore import Qt
@@ -8,11 +9,16 @@ from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 
 class FirstTab(QtWidgets.QMainWindow): 
 
-    def __init__(self, port, statusText):
-        super().__init__()
-        self.port = port
-        self.statusText = statusText
-        self.payload = ''
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.port = parent.port
+        self.statusText = parent.statusText
+        self.getButton = parent.getButton
+        self.saveButton = parent.saveButton
+        self.tButton = parent.getButton
+        self.timeout = parent.timeout
+        self.payload = parent.serialPayload
+
         self.initUI()
 
     def initUI(self):
@@ -46,14 +52,22 @@ class FirstTab(QtWidgets.QMainWindow):
             self.port.setFlowControl( 0 ) 
             r = self.port.open(QtCore.QIODevice.ReadWrite)
             if not r:
+                # this does not test if it is already open and happy. 
+                print ( self.toolBar.portName() )
                 self.statusText.setText('Port open: error')
+                self.getButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
+                self.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
                 self.toolBar.portOpenButton.setChecked(False)
                 # self.toolBar.serialControlEnable(True)
             else:
+                self.getButton.setStyleSheet("background-color : green;" "border :1px solid green;") 
+                self.saveButton.setStyleSheet("background-color : green;" "border :1px solid green;") 
                 self.statusText.setText('Port opened')
                 # self.toolBar.serialControlEnable(False)
         else:
             self.port.close()
+            self.getButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
+            self.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
             self.statusText.setText('Port closed')
             # self.toolBar.serialControlEnable(True)
         
@@ -75,6 +89,7 @@ class FirstTab(QtWidgets.QMainWindow):
 
     def readFromPort(self):
         data = self.port.readAll().data().decode()
+        self.timeout.restart()
         # strip vt100 chars
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
         data = ansi_escape.sub('', data)

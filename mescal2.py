@@ -1,47 +1,93 @@
 #!/usr/bin/env python3
 
-# https://ymt-lab.com/en/post/2021/pyqt5-serial-monitor/
-
 import sys
+import re
 import math
+from Timer import Timer
 import FirstTab
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QPlainTextEdit, QTabWidget, QVBoxLayout, QGridLayout, QGroupBox
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QPlainTextEdit, QTabWidget, QVBoxLayout, QGridLayout, QGroupBox
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 
 class Mescal(QtWidgets.QMainWindow):
     def __init__(self):
         super(Mescal, self).__init__()
 
-        self.port = QSerialPort()
-
+        # window stuff
+        self.move(QApplication.desktop().availableGeometry().bottomLeft())
         self.setMinimumWidth(800)
         self.setMinimumHeight(300)
 
-        self.tabWidget = QtWidgets.QTabWidget()
-        # sets the tabWidget as the central widget inside the QMainWindow
-        self.setCentralWidget(self.tabWidget)
+        # serial stuff
+        self.serialPayload = ''
+        self.port = QSerialPort()
+
+        ### Serial Timer ###
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.serialLastRead)
+        self.timer.start(50)
+        self.timeout = Timer()
+        self.timeout.start()
 
         ### Status Bar ###
         self.setStatusBar( QtWidgets.QStatusBar(self) )
+
         self.statusText = QtWidgets.QLabel(self)
-        self.statusBar().addWidget( self.statusText )
+        self.statusText.setAlignment(QtCore.Qt.AlignRight)
+        self.statusText.setText('Port closed')
+        self.statusBar().addPermanentWidget( self.statusText )
+
+        self.getButton = QtWidgets.QPushButton("G")
+        self.getButton.setStyleSheet("background-color : yellow;" "border :1px solid black;") 
+        self.getButton.setFixedSize(30, 32)
+        self.getButton.clicked.connect(self.getSerialData)
+        self.statusBar().addWidget( self.getButton )
+
+        self.saveButton = QtWidgets.QPushButton("S")
+        self.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid black;") 
+        self.saveButton.setFixedSize(30, 32)
+        self.saveButton.clicked.connect(self.saveSerialData)
+        self.statusBar().addWidget( self.saveButton)
         
+
         ### Tabs ###
+        self.tabWidget = QtWidgets.QTabWidget()
+        self.setCentralWidget(self.tabWidget)
 
-        self.tab_first = FirstTab.FirstTab(self.port, self.statusText)
+        self.tab_first = FirstTab.FirstTab(self)
         self.tabWidget.addTab(self.tab_first,"Port")
-        self.tab_second = SecondTab(self.port, self.statusText)
-        self.tabWidget.addTab(self.tab_second,"Motor parameters")
+        self.tab_second = SecondTab(self)
+        self.tabWidget.setCurrentIndex(self.tabWidget.addTab(self.tab_second,"Motor parameters"))
 
+
+    def serialLastRead(self):
+        print(self.timeout.now())
+        print(self.serialPayload)
+
+        if (len(self.serialPayload) > 0): 
+            if (self.timeout) > 0.2:
+                print("boop")
+                print (self.serialPayload)
+                self.lastSerialTime = 0.0
+                self.serialPayload = ''
+                
+
+    def getSerialData(self):
+        print("fetch")
+        text = 'get vbus\r\n'
+        self.port.write( text.encode() )
+
+    def saveSerialData(self):
+        print("save")
+        
 
 class SecondTab(QtWidgets.QMainWindow): # motor parameters
 
-    def __init__(self, port, statusText):
-        super().__init__()
-        self.port = port
-        self.statusText = statusText
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.port = parent.port
+        self.statusText = parent.statusText
         self.initUI()
 
     def initUI(self):
@@ -60,11 +106,12 @@ class SecondTab(QtWidgets.QMainWindow): # motor parameters
         layout.addRow(self.pb1, self.lineEdit1)
         layout.addRow(self.pb2, self.lineEdit2)
         layout.addRow(self.pb3, self.lineEdit3)
-
         self.pb1.clicked.connect(self.pb1Clicked)
+
 
     def pb1Clicked(self):
         print('Your name: ' + self.lineEdit1.text())
+
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
