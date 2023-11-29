@@ -25,6 +25,7 @@ class FirstTab(QtWidgets.QMainWindow):
         self.serialSendView = SerialSendView(self)
 
         self.setCentralWidget( QtWidgets.QWidget(self) )
+
         layout = QtWidgets.QVBoxLayout( self.centralWidget() )
         layout.addWidget(self.serialDataView)
         layout.addWidget(self.serialSendView)

@@ -9,6 +9,7 @@ class Payload:
     def __init__(self):
         self._start_time = None
         self._string = ''
+        self._struct = None
 
     def concatString(self, s):
         """add to string"""
@@ -72,12 +73,10 @@ class Payload:
         count = 0
         start = False
 
-        struct = {}
-        struct['names'] = []
+        self._struct = {}
+        self._struct['names'] = []
 
         lines = self._string
-
-        print(self._string)
 
         for line in lines.split('\n'):
             count += 1
@@ -85,15 +84,18 @@ class Payload:
                 l = line.split('\t')
                 if len(l) == 5:
                     # print("Line {}: {}".format(line.count('\t'), line.strip()))
-                    struct[l[0]] = {}
-                    struct[l[0]]['value'] = l[1]
-                    struct[l[0]]['min'] = l[2]
-                    struct[l[0]]['max'] = l[3]
-                    struct[l[0]]['desc'] = l[4]
-                    struct['names'].append(l[0])
+                    self._struct[l[0]] = {}
+                    self._struct[l[0]]['value'] = l[1]
+                    self._struct[l[0]]['min'] = l[2]
+                    self._struct[l[0]]['max'] = l[3]
+                    self._struct[l[0]]['desc'] = l[4]
+                    self._struct['names'].append(l[0])
             if "Parameter\tValue" in line:
                 start = True
 
-        for l in struct['names']:
-            print(l, struct[l]['value'])
-    
+    def reportPayload(self):
+        """return payload structure"""
+        if self._struct is None:
+            raise PayloadError(f"do not have payload structure")
+
+        return(self._struct)

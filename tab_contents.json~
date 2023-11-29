@@ -1,0 +1,17 @@
+MOTOR: INPUT				
+"widgets": 
+{
+"value": "ld_phase",
+"type": "singleText",
+"desc": "Phase inductance"
+}
+
+lq_phase singleText   Phase inductance
+r_phase  singleText   Phase resistance
+motor_pp singleText   Number of motor pole PAIRS
+pole_pairs singleText   Motor pole pairs
+
+SENSOR:
+SL_sensor comboBox 0=OL, 1=Hall, 2=PWMENC, 3=HFI
+safe_count singleText Live count before allowing throttle
+safe_start singleText Countdown before allowing throttle
