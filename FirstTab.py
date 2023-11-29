@@ -1,5 +1,4 @@
 import re
-from Timer import Timer
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QPlainTextEdit, QTabWidget, QVBoxLayout, QGridLayout, QGroupBox
 from PyQt5.QtCore import Qt
@@ -11,18 +10,17 @@ class FirstTab(QtWidgets.QMainWindow):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self.parent = parent
         self.port = parent.port
         self.statusText = parent.statusText
         self.getButton = parent.getButton
         self.saveButton = parent.saveButton
         self.tButton = parent.getButton
-        self.timeout = parent.timeout
-        self.payload = parent.serialPayload
+        self.serialPayload = parent.serialPayload
 
         self.initUI()
 
     def initUI(self):
-
         self.serialDataView = SerialDataView(self)
         self.serialSendView = SerialSendView(self)
 
@@ -87,28 +85,34 @@ class FirstTab(QtWidgets.QMainWindow):
         self.toolBar.portNames.clear()       
         self.toolBar.portNames.addItems( l ) 
 
+    # among other things this loads the serial payload
+    #  which is detected by parent and then loaded into
+    #  UI variables
     def readFromPort(self):
         data = self.port.readAll().data().decode()
-        self.timeout.restart()
         # strip vt100 chars
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
         data = ansi_escape.sub('', data)
         data = re.sub('\| ', '\t', data)
-        self.payload += data 
+        self.serialPayload.resetTimer()
+        self.serialPayload.concatString(data)
+
         if len(data) > 0:
-            # self.serialDataView.appendSerialText( QtCore.QTextStream(data).readAll(), QtGui.QColor(255, 0, 0) )
             self.serialDataView.appendSerialText( data, QtGui.QColor(0, 0, 0))
 
     def sendFromPort(self, text):
         text = text + '\r\n'
+        self.serialPayload.resetString()
         self.port.write( text.encode() )
-        self.payload = ''
+        self.serialPayload.resetTimer()
         self.serialDataView.appendSerialText( text, QtGui.QColor(0, 0, 255) )
 
 
 class SerialDataView(QtWidgets.QWidget):
     def __init__(self, parent):
+
         super(SerialDataView, self).__init__(parent)
+
         self.serialData = QtWidgets.QTextEdit(self)
         self.serialData.setReadOnly(True)
         self.serialData.setFontFamily('Courier New')
