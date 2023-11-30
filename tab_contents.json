@@ -4,27 +4,27 @@
 	"type": "input",
 	"widgets": [
 	    {
-		"value": "r_phase",
+		"name": "r_phase",
 		"type": "singleText",
 		"desc": "Phase resistance"
 	    },
 	    {
-		"value": "lq_phase",
+		"name": "lq_phase",
 		"type": "singleText",
 		"desc": "Phase inductance"
 	    },
 	    {
-		"value": "ld_phase",
+		"name": "ld_phase",
 		"type": "singleText",
 		"desc": "Phase inductance"
 	    },
 	    {
-		"value": "motor_pp",
+		"name": "motor_pp",
 		"type": "singleText",
 		"desc": "Motor pole pairs"
 	    },
 	    {
-		"value": "pole_pairs",
+		"name": "pole_pairs",
 		"type": "singleText",
 		"desc": "Motor pole pairs"
 	    }
@@ -35,18 +35,18 @@
 	"type": "input",
 	"widgets": [
 	    {
-		"value": "SL_sensor",
+		"name": "SL_sensor",
 		"type": "comboBox",
 		"desc": "Input types to control motor",
 		"list": ["OL", "Hall", "PWMENC", "HFI"]
 	    },
 	    {
-		"value": "safe_count",
+		"name": "safe_count",
 		"type": "singleText",
 		"desc": "Live count before allowing throttle"
 	    },
 	    {
-		"value": "safe_start",
+		"name": "safe_start",
 		"type": "singleText",
 		"desc": "Countdown before allowing throttle"
 	    }

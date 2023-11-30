@@ -1,6 +1,0 @@
-MOTOR PARAMETERS, INPUT				
-ld_phase	0.000032	0	10	Phase inductance
-lq_phase	0.000046	0	10	Phase inductance
-r_phase	0.008	0	10	Phase resistance
-motor_pp	5	0	30	Number of motor pole PAIRS
-pole_pairs	5	0	255	Motor pole pairs

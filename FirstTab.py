@@ -54,19 +54,19 @@ class FirstTab(QtWidgets.QMainWindow):
                 # this does not test if it is already open and happy. 
                 print ( self.toolBar.portName() )
                 self.statusText.setText('Port open: error')
-                self.getButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
-                self.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
+                # self.getButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
+                # self.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
                 self.toolBar.portOpenButton.setChecked(False)
                 # self.toolBar.serialControlEnable(True)
             else:
-                self.getButton.setStyleSheet("background-color : green;" "border :1px solid green;") 
-                self.saveButton.setStyleSheet("background-color : green;" "border :1px solid green;") 
+                # self.getButton.setStyleSheet("background-color : green;" "border :1px solid green;") 
+                # self.saveButton.setStyleSheet("background-color : green;" "border :1px solid green;") 
                 self.statusText.setText('Port opened')
                 # self.toolBar.serialControlEnable(False)
         else:
             self.port.close()
-            self.getButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
-            self.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
+            # self.getButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
+            # self.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
             self.statusText.setText('Port closed')
             # self.toolBar.serialControlEnable(True)
         
@@ -163,7 +163,7 @@ class ToolBar(QtWidgets.QToolBar):
         self.portOpenButton.setMinimumHeight(32)
 
         self.portRefreshButton = QtWidgets.QPushButton('Refresh')
-        self.portRefreshButton.setCheckable(True)
+        # self.portRefreshButton.setCheckable(True)
         self.portRefreshButton.setMinimumHeight(32)
 
         self.portNames = QtWidgets.QComboBox(self)

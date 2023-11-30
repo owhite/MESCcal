@@ -31,6 +31,7 @@ class Payload:
             raise PayloadError(f"init string to reset it")
 
         self._string = ''
+        self._struct = None
 
     def reportString(self):
         """send string value"""
@@ -73,6 +74,8 @@ class Payload:
         count = 0
         start = False
 
+        self._goodPayload = False
+
         self._struct = {}
         self._struct['names'] = []
 
@@ -82,7 +85,7 @@ class Payload:
             count += 1
             if start: 
                 l = line.split('\t')
-                if len(l) == 5:
+                if len(l) == 5: # the only way we know we're getting variables
                     # print("Line {}: {}".format(line.count('\t'), line.strip()))
                     self._struct[l[0]] = {}
                     self._struct[l[0]]['value'] = l[1]
@@ -95,7 +98,4 @@ class Payload:
 
     def reportPayload(self):
         """return payload structure"""
-        if self._struct is None:
-            raise PayloadError(f"do not have payload structure")
-
         return(self._struct)
