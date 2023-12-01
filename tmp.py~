@@ -1,0 +1,18 @@
+import re
+
+string = "SCORCH is an interdisciplinary effort, involving teams of investigators at ten institutions – Yale, Boston University, Mount Sinai, the University of Nebraska Medical Center, {strip out this text} the Broad Institute, University of California San Diego, {ALSO FIND THIS} Weill Cornell Medicine, The Allen Institute, Scripps Research as well as a Data Coordination Center (DCC)"
+
+# Define a regular expression pattern to capture text between "{" and "}"
+pattern = r'\{([^}]+)\}'
+
+# Find all matches using re.findall
+matches = re.findall(pattern, string)
+
+# Concatenate the matches into a single string
+text_inside_braces = ' '.join(matches)
+
+# Remove the matched substrings from the original string
+remaining_text = re.sub(pattern, '', string)
+
+print("Text inside braces:", text_inside_braces)
+print("Remaining text:", remaining_text)

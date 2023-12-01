@@ -17,19 +17,20 @@ class FirstTab(QtWidgets.QMainWindow):
         self.saveButton = parent.saveButton
         self.tButton = parent.getButton
         self.serialStreamingOn = parent.serialStreamingOn
-        self.serialCMDOn = parent.serialCMDOn
         self.serialPayload = parent.serialPayload
         self.max_chars = 3000
 
         self.initUI()
 
     def initUI(self):
+        self.jsonDataView   = jsonDataView(self)
         self.serialDataView = SerialDataView(self)
         self.serialSendView = SerialSendView(self)
 
         self.setCentralWidget( QtWidgets.QWidget(self) )
 
         layout = QtWidgets.QVBoxLayout( self.centralWidget() )
+        layout.addWidget(self.jsonDataView)
         layout.addWidget(self.serialDataView)
         layout.addWidget(self.serialSendView)
         layout.setContentsMargins(3, 3, 3, 3)
@@ -98,19 +99,32 @@ class FirstTab(QtWidgets.QMainWindow):
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
         data = ansi_escape.sub('', data)
         data = re.sub('\| ', '\t', data)
-        self.serialPayload.resetTimer()
 
-        self.serialPayload.concatString(data)
-        r = self.serialPayload.reportString()
-        if self.parent.serialCMDOn:
-            if "@MESC>" in r:
+        # get current buffer, add the data
+        r = self.serialPayload.reportString() + data
+        
+        # Extract json strings from input buffer
+        text_inside_braces = ''
+        pattern = r'(\{[^}]+\}\r\n)' # find text between "{.*}\r\n"
+        matches = re.findall(pattern, r) # get all matches
+        text_inside_braces = ''.join(matches) # Concatenate all matches
+        remaining_text = re.sub(pattern, '', r) # remove all matches
 
-                print("{0} :: {1}".format(self.parent.serialCMDOn, r))
-                self.parent.serialCMDOn = False
-                self.serialPayload.resetString()
+        self.serialStreamingOn = False
+        if len(text_inside_braces) > 0:
+            self.jsonDataView.appendJsonText(text_inside_braces, QtGui.QColor(0, 0, 0) )
+            self.serialStreamingOn = True
 
-        if len(data) > 0:
-            self.serialDataView.appendSerialText( data, QtGui.QColor(0, 0, 0) )
+        if remaining_text.endswith("@MESC>"):
+            self.serialDataView.appendSerialText( remaining_text, QtGui.QColor(0, 0, 0) )
+            # my main question is if there is ever a time when you can just blow away
+            #  the buffer that is used to collect data. 
+            self.serialPayload.resetString()
+        else:
+            self.serialPayload.setString(remaining_text) 
+
+        # Last thing. bump the timer that serial data was received
+        self.serialPayload.resetTimer() 
 
     def sendFromPort(self, text):
         text = text + '\r\n'
@@ -119,6 +133,35 @@ class FirstTab(QtWidgets.QMainWindow):
         self.serialPayload.resetTimer()
         self.serialDataView.appendSerialText( text, QtGui.QColor(0, 0, 255) )
 
+
+class jsonDataView(QtWidgets.QWidget):
+    def __init__(self, parent):
+
+        super(jsonDataView, self).__init__(parent)
+
+        self.max_chars = parent.max_chars
+        self.jsonData = QtWidgets.QTextEdit(self)
+        self.jsonData.setReadOnly(True)
+        self.jsonData.setFontFamily('Courier New')
+        self.jsonData.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.setLayout( QtWidgets.QGridLayout(self) )
+        self.layout().addWidget(self.jsonData, 0, 0, 1, 1)
+        self.layout().setContentsMargins(2, 2, 2, 2)
+        
+    def appendJsonText(self, appendText, color):
+        self.jsonData.moveCursor(QtGui.QTextCursor.End)
+        self.jsonData.setFontFamily('Courier New')
+        self.jsonData.setTextColor(color)
+        current_text = self.jsonData.toPlainText()
+
+        if len(current_text) > self.max_chars:
+            # If it exceeds, truncate the text
+            new_text = current_text[len(current_text)-self.max_chars:]
+            self.jsonData.setPlainText(new_text)
+            self.jsonData.moveCursor(QtGui.QTextCursor.End)
+
+        self.jsonData.insertPlainText(appendText)
+        self.jsonData.moveCursor(QtGui.QTextCursor.End)
 
 class SerialDataView(QtWidgets.QWidget):
     def __init__(self, parent):

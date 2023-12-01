@@ -43,7 +43,6 @@ class Mescal(QtWidgets.QMainWindow):
         self.timer.start(50)
         self.serialStreamingOn = False
         self.serialWasOn = False
-        self.serialCMDOn = False
         self.serialButtonInc = 9
         self.serialButtonColor = ''
         self.serialPayload = Payload.Payload()
@@ -96,35 +95,34 @@ class Mescal(QtWidgets.QMainWindow):
         self.streamButton.setCheckable(True)
         self.streamButton.clicked.connect(self.getSerialStream)
         self.statusBar().addWidget( self.streamButton)
-        self.shutOffSerialButton()
+        self.serialButtonOff()
 
-    def shutOffSerialButton(self):
+    def serialButtonOff(self):
         self.streamButton.setStyleSheet("background-color : white;" "border :2px solid black;") 
-        self.streamButton.setChecked(True)
+        # self.streamButton.setChecked(True)
         self.serialStreamingOn = False
+
+    def serialButtonOn(self):
+        self.streamButton.setStyleSheet("background-color : white;" "border :2px solid blue;") 
+        # self.streamButton.setChecked(True)
+        self.serialStreamingOn = True
 
     def getSerialStream(self, checked):
         self.statusText.setText('Serial: streaming')
         if checked: # then stop things
-            self.shutOffSerialButton()
+            self.serialButtonOff()
             text = 'status stop\r\n'
         else:
-            self.streamButton.setStyleSheet("background-color : white;" "border :2px solid blue;") 
-            self.serialStreamingOn = True
+            self.serialButtonOn()
             text = 'status json\r\n'
 
-        self.serialPayload.resetString()
         self.port.write( text.encode() )
         self.serialPayload.resetTimer()
 
     def getSerialData(self):
         self.statusText.setText('Serial: get')
         text = 'get\r\n'
-        print("Serial get started")
         self.port.write( text.encode() )
-        self.serialPayload.resetString()
-        self.serialPayload.setString("///")
-        self.serialCMDOn = True
         self.serialPayload.resetTimer()
 
     def saveSerialData(self):
@@ -160,6 +158,11 @@ class Mescal(QtWidgets.QMainWindow):
             self.saveButton.setStyleSheet("background-color : #009900;" "border :1px solid green;") 
             self.serialWasOn = True
 
+        if self.serialStreamingOn:
+            self.serialButtonOn()
+        else:
+            self.serialButtonOff()
+
         if (self.serialPayload.reportTimer()) > 0.2:
             if len(self.serialPayload.reportString()) > 0:
                 self.serialPayload.parsePayload()
@@ -171,9 +174,7 @@ class Mescal(QtWidgets.QMainWindow):
                 
                 # now clear everything that was received
                 self.serialPayload.resetTimer()
-                self.serialPayload.resetString()
-
-                # self.shutOffSerialButton()
+                # self.serialPayload.resetString()
 
                 
 class createTab(QtWidgets.QMainWindow): 
@@ -199,7 +200,7 @@ class createTab(QtWidgets.QMainWindow):
             pb = QtWidgets.QPushButton(t['name'])
             le = QtWidgets.QLineEdit()
             self.lineEdits[t['name']] = le
-            pb.clicked.connect(partial(self.buttonClicked, t['name'], le))
+            pb.clicked.connect(partial(self.dataEntryButtonClicked, t['name'], le))
 
             layout.addRow(pb, le)
             count += 1
@@ -222,7 +223,7 @@ class createTab(QtWidgets.QMainWindow):
             except ValueError:
                 return False
 
-    def buttonClicked(self, name, line):
+    def dataEntryButtonClicked(self, name, line):
         n = line.text()
         if not self.port.isOpen():
             self.statusText.setText('Port closed: cant update')
@@ -231,9 +232,9 @@ class createTab(QtWidgets.QMainWindow):
                 text = 'set {0} {1}'.format(name, n)
                 self.statusText.setText(text)
                 text = text + '\r\n'
-                self.parent.serialPayload.resetString() # do i need this?
                 self.port.write( text.encode() )
-                self.parent.serialPayload.resetTimer() # and this? 
+                self.parent.serialPayload.resetTimer() # do i need this?
+                # self.parent.serialPayload.resetString() # 
 
             else:
                 self.statusText.setText('{0} not number'.format(n))
