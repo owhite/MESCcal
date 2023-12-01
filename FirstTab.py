@@ -16,7 +16,10 @@ class FirstTab(QtWidgets.QMainWindow):
         self.getButton = parent.getButton
         self.saveButton = parent.saveButton
         self.tButton = parent.getButton
+        self.serialStreamingOn = parent.serialStreamingOn
+        self.serialCMDOn = parent.serialCMDOn
         self.serialPayload = parent.serialPayload
+        self.max_chars = 3000
 
         self.initUI()
 
@@ -88,7 +91,7 @@ class FirstTab(QtWidgets.QMainWindow):
 
     # among other things this loads the serial payload
     #  which is detected by parent and then loaded into
-    #  UI variables
+    #  UI variables`
     def readFromPort(self):
         data = self.port.readAll().data().decode()
         # strip vt100 chars
@@ -96,10 +99,18 @@ class FirstTab(QtWidgets.QMainWindow):
         data = ansi_escape.sub('', data)
         data = re.sub('\| ', '\t', data)
         self.serialPayload.resetTimer()
+
         self.serialPayload.concatString(data)
+        r = self.serialPayload.reportString()
+        if self.parent.serialCMDOn:
+            if "@MESC>" in r:
+
+                print("{0} :: {1}".format(self.parent.serialCMDOn, r))
+                self.parent.serialCMDOn = False
+                self.serialPayload.resetString()
 
         if len(data) > 0:
-            self.serialDataView.appendSerialText( data, QtGui.QColor(0, 0, 0))
+            self.serialDataView.appendSerialText( data, QtGui.QColor(0, 0, 0) )
 
     def sendFromPort(self, text):
         text = text + '\r\n'
@@ -114,6 +125,7 @@ class SerialDataView(QtWidgets.QWidget):
 
         super(SerialDataView, self).__init__(parent)
 
+        self.max_chars = parent.max_chars
         self.serialData = QtWidgets.QTextEdit(self)
         self.serialData.setReadOnly(True)
         self.serialData.setFontFamily('Courier New')
@@ -126,6 +138,14 @@ class SerialDataView(QtWidgets.QWidget):
         self.serialData.moveCursor(QtGui.QTextCursor.End)
         self.serialData.setFontFamily('Courier New')
         self.serialData.setTextColor(color)
+        current_text = self.serialData.toPlainText()
+
+        if len(current_text) > self.max_chars:
+            # If it exceeds, truncate the text
+            new_text = current_text[len(current_text)-self.max_chars:]
+            self.serialData.setPlainText(new_text)
+            self.serialData.moveCursor(QtGui.QTextCursor.End)
+
         self.serialData.insertPlainText(appendText)
         self.serialData.moveCursor(QtGui.QTextCursor.End)
 
