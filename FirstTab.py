@@ -110,27 +110,23 @@ class FirstTab(QtWidgets.QMainWindow):
         text_inside_braces = ''.join(matches) # Concatenate all matches
         remaining_text = re.sub(pattern, '', r) # remove all matches
 
-        self.serialStreamingOn = False
         if len(text_inside_braces) > 0:
             self.jsonDataView.appendJsonText(text_inside_braces, QtGui.QColor(0, 0, 0) )
-            self.serialStreamingOn = True
+            self.serialPayload.resetTimer() 
 
+        # hoping this means we have a complete command block
         if remaining_text.endswith("@MESC>"):
             self.serialDataView.appendSerialText( remaining_text, QtGui.QColor(0, 0, 0) )
-            # my main question is if there is ever a time when you can just blow away
-            #  the buffer that is used to collect data. 
-            self.serialPayload.resetString()
-        else:
-            self.serialPayload.setString(remaining_text) 
+            self.parent.updateTabs()
+            
+        self.serialPayload.setString(remaining_text) 
 
         # Last thing. bump the timer that serial data was received
-        self.serialPayload.resetTimer() 
 
     def sendFromPort(self, text):
         text = text + '\r\n'
         self.serialPayload.resetString()
         self.port.write( text.encode() )
-        self.serialPayload.resetTimer()
         self.serialDataView.appendSerialText( text, QtGui.QColor(0, 0, 255) )
 
 

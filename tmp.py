@@ -1,43 +1,70 @@
 #!/usr/bin/env python3
 
-import re
 
-string = """
-status json
+import sys
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout, QLabel, QToolBar, QAction, QHBoxLayout
 
-usb@MESC>{"adc1":0,"ehz":-0.201,"error":0,"id":-0.613,"iq":-0.756,"iqreq":0.000,"TMOS":300.158,"TMOT":211.941,"vbus":31.850,"Vd":-0.205,"Vq":-0.221}
-{"adc1":0,"ehz":-0.128,"error":0,"id":-0.639,"iq":-0.774,"iqreq":0.000,"TMOS":300.158,"TMOT":212.057,"vbus":31.925,"Vd":-0.185,"Vq":-0.221}
-{"adc1":0,"ehz":-0.067,"error":0,"id":-0.618,"iq":-0.777,"iqreq":0.000,"TMOS":300.158,"TMOT":211.937,"vbus":31.925,"Vd":-0.248,"Vq":-0.221}
-{"adc1":0,"ehz":-0.006,"error":0,"id":-0.672,"iq":-0.733,"iqreq":0.000,"TMOS":300.158,"TMOT":211.977,"vbus":31.962,"Vd":-0.227,"Vq":-0.258}
-{"adc1":0,"ehz":0.055,"error":0,"id":-0.649,"iq":-0.812,"iqreq":0.000,"TMOS":300.158,"TMOT":211.946,"vbus":31.925,"Vd":-0.206,"Vq":-0.233}
-{"adc1":0,"ehz":0.116,"error":0,"id":-0.664,"iq":-0.797,"iqreq":0.000,"TMOS":300.158,"TMOT":211.949,"vbus":31.888,"Vd":-0.227,"Vq":-0.235}
-{"adc1":0,"ehz":0.177,"error":0,"id":-0.614,"iq":-0.764,"iqreq":0.000,"TMOS":300.158,"TMOT":212.077,"vbus":31.962,"Vd":-0.184,"Vq":-0.193}
-{"adc1":0,"ehz":0.238,"error":0,"id":-0.621,"iq":-0.739,"iqreq":0.000,"TMOS":300.158,"TMOT":211.951,"vbus":31.925,"Vd":-0.226,"Vq":-0.248}
-{"adc1":0,"ehz":0.299,"error":0,"id":-0.652,"iq":-0.781,"iqreq":0.000,"TMOS":300.158,"TMOT":211.979,"vbus":31.888,"Vd":-0.206,"Vq":-0.246}
-{"adc1":0,"ehz":0.259,"error":0,"id":-0.649,"iq":-0.754,"iqreq":0.000,"TMOS":300.158,"TMOT":211.931,"vbus":31.888,"Vd":-0.227,"Vq":-0.246}
-{"adc1":0,"ehz":0.198,"error":0,"id":-0.679,"iq":-0.729,"iqreq":0.000,"TMOS":300.158,"TMOT":211.957,"vbus":31.925,"Vd":-0.227,"Vq":-0.260}
-{"adc1":0,"ehz":0.137,"error":0,"id":-0.673,"iq":-0.736,"iqreq":0.000,"TMOS":300.158,"TMOT":212.069,"vbus":31.925,"Vd":-0.226,"Vq":-0.235}
-status stop
+class MyMainWindow(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-usb@MESC>
-"""
+        # Create main widget and set layout
+        main_widget = QtWidgets.QWidget(self)
+        main_layout = QHBoxLayout(main_widget)
+        main_widget.setLayout(main_layout)
 
-# Define a regular expression pattern to capture text between "{" and "}"
-pattern = r'(\{[^}]+\}\n)'
-# pattern = r'(\{[^}\"]+\}\n)'
+        # Create tab widget
+        tab_widget = QTabWidget(self)
 
-# Find all matches using re.findall
-matches = re.findall(pattern, string)
+        # Create tabs
+        tab1 = QWidget(self)
+        tab2 = QWidget(self)
+        tab3 = QWidget(self)
 
-# Concatenate the matches into a single string
-text_inside_braces = ''.join(matches)
+        # Add tabs to tab widget
+        tab_widget.addTab(tab1, "Tab 1")
+        tab_widget.addTab(tab2, "Tab 2")
+        tab_widget.addTab(tab3, "Tab 3")
 
-# Remove the matched substrings from the original string
-remaining_text = re.sub(pattern, '', string)
+        # Create a toolbar
+        toolbar = QToolBar("My Toolbar", self)
+        self.addToolBar(toolbar)
 
-print("BLOCK1")
-print(remaining_text)
-print("BLOCK2")
-print(text_inside_braces)
+        # Create a button on the toolbar
+        open_panel_action = QAction("Toggle Panel", self)
+        open_panel_action.triggered.connect(self.toggle_panel)
+        toolbar.addAction(open_panel_action)
 
+        # Create a container widget for the panels
+        self.panel_container = QWidget(self)
+        self.panel_layout = QVBoxLayout(self.panel_container)
 
+        # Add the tab widget and panel container to the main layout
+        main_layout.addWidget(tab_widget)
+        main_layout.addWidget(self.panel_container)
+        self.panel_container.hide()
+
+        # Set central widget
+        self.setCentralWidget(main_widget)
+
+        # Set window properties
+        self.setWindowTitle("PyQt5 Tabs, Toolbar, and Dynamic Right Panel Example")
+        self.setGeometry(100, 100, 800, 600)
+
+    def toggle_panel(self):
+        window_size = window.size()
+
+        if self.panel_container.isHidden():
+            self.panel_container.show()
+            self.panel_container.setFixedWidth(200)
+            self.last_width = window_size.width()
+            self.setGeometry(100, 100, window_size.width()+200, 600)
+        else:
+            self.setGeometry(100, 100, self.last_width, 600)
+            self.panel_container.hide()
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = MyMainWindow()
+    window.show()
+    sys.exit(app.exec_())

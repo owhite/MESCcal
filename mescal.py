@@ -39,7 +39,7 @@ class Mescal(QtWidgets.QMainWindow):
         ### Serial stuff ###
         self.port = QSerialPort()
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.checkSerialPayload)
+        self.timer.timeout.connect(self.checkSerialStatus) # monitors if json is coming in
         self.timer.start(50)
         self.serialStreamingOn = False
         self.serialWasOn = False
@@ -95,35 +95,32 @@ class Mescal(QtWidgets.QMainWindow):
         self.streamButton.setCheckable(True)
         self.streamButton.clicked.connect(self.getSerialStream)
         self.statusBar().addWidget( self.streamButton)
-        self.serialButtonOff()
 
     def serialButtonOff(self):
         self.streamButton.setStyleSheet("background-color : white;" "border :2px solid black;") 
-        # self.streamButton.setChecked(True)
+        self.streamButton.setChecked(True)
         self.serialStreamingOn = False
 
     def serialButtonOn(self):
         self.streamButton.setStyleSheet("background-color : white;" "border :2px solid blue;") 
-        # self.streamButton.setChecked(True)
+        self.streamButton.setChecked(False)
         self.serialStreamingOn = True
 
     def getSerialStream(self, checked):
-        self.statusText.setText('Serial: streaming')
         if checked: # then stop things
-            self.serialButtonOff()
+            self.statusText.setText('Serial: no streaming')
             text = 'status stop\r\n'
         else:
-            self.serialButtonOn()
+            self.statusText.setText('Serial: streaming')
             text = 'status json\r\n'
+            self.serialPayload.resetTimer()
 
         self.port.write( text.encode() )
-        self.serialPayload.resetTimer()
 
     def getSerialData(self):
         self.statusText.setText('Serial: get')
         text = 'get\r\n'
         self.port.write( text.encode() )
-        self.serialPayload.resetTimer()
 
     def saveSerialData(self):
         print("run save");
@@ -141,12 +138,21 @@ class Mescal(QtWidgets.QMainWindow):
         html_color = "#{:02X}{:02X}{:02X}".format(int(r * 255), int(g * 255), int(b * 255))
         return html_color
 
+    # this gets a string that may have commands in it
+    def updateTabs(self):
+        if len(self.serialPayload.reportString()) > 0:
+            self.serialPayload.parsePayload()
+            p = self.serialPayload.reportPayload()
+            # update tabs if the payload has anything, 
+            if p is not None and len(p['names']) > 0:
+                for tab in self.tabs:
+                    tab.updateValues(p)
+
+        self.serialPayload.resetString()
+
 
     # a timer that checks if anything has recently been transmitted
-    #  if it times out, then Jens term must have stopped
-    #  so something like getSerialData() is not really the place
-    #  to collected all the parsed information. 
-    def checkSerialPayload(self):
+    def checkSerialStatus(self):
         if not self.port.isDataTerminalReady(): # seems to indicate the port is dead
             self.getButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
             self.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
@@ -158,24 +164,10 @@ class Mescal(QtWidgets.QMainWindow):
             self.saveButton.setStyleSheet("background-color : #009900;" "border :1px solid green;") 
             self.serialWasOn = True
 
-        if self.serialStreamingOn:
-            self.serialButtonOn()
-        else:
+        if (self.serialPayload.reportTimer()) > 0.2: # checks if json is coming in
             self.serialButtonOff()
-
-        if (self.serialPayload.reportTimer()) > 0.2:
-            if len(self.serialPayload.reportString()) > 0:
-                self.serialPayload.parsePayload()
-                p = self.serialPayload.reportPayload()
-                # if the payload has anything, try updating all the tabs
-                if p is not None and len(p['names']) > 0:
-                    for tab in self.tabs:
-                        tab.updateValues(p)
-                
-                # now clear everything that was received
-                self.serialPayload.resetTimer()
-                # self.serialPayload.resetString()
-
+        else:
+            self.serialButtonOn()
                 
 class createTab(QtWidgets.QMainWindow): 
 
@@ -233,7 +225,6 @@ class createTab(QtWidgets.QMainWindow):
                 self.statusText.setText(text)
                 text = text + '\r\n'
                 self.port.write( text.encode() )
-                self.parent.serialPayload.resetTimer() # do i need this?
                 # self.parent.serialPayload.resetString() # 
 
             else:
