@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 
-
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout, QLabel, QToolBar, QAction, QHBoxLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout, QLabel, QTextEdit, QHBoxLayout
 
-class MyMainWindow(QtWidgets.QMainWindow):
+class MyMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
         # Create main widget and set layout
-        main_widget = QtWidgets.QWidget(self)
+        main_widget = QWidget(self)
         main_layout = QHBoxLayout(main_widget)
         main_widget.setLayout(main_layout)
+
+        # Create left panel with tabs and status bar
+        left_panel = QWidget(self)
+        left_layout = QVBoxLayout(left_panel)
+        left_panel.setLayout(left_layout)
 
         # Create tab widget
         tab_widget = QTabWidget(self)
@@ -26,42 +30,31 @@ class MyMainWindow(QtWidgets.QMainWindow):
         tab_widget.addTab(tab2, "Tab 2")
         tab_widget.addTab(tab3, "Tab 3")
 
-        # Create a toolbar
-        toolbar = QToolBar("My Toolbar", self)
-        self.addToolBar(toolbar)
+        # Create status bar
+        status_bar = QLabel("Status Bar", self)
 
-        # Create a button on the toolbar
-        open_panel_action = QAction("Toggle Panel", self)
-        open_panel_action.triggered.connect(self.toggle_panel)
-        toolbar.addAction(open_panel_action)
+        # Add the tab widget and status bar to the left layout
+        left_layout.addWidget(tab_widget)
+        left_layout.addWidget(status_bar)
 
-        # Create a container widget for the panels
-        self.panel_container = QWidget(self)
-        self.panel_layout = QVBoxLayout(self.panel_container)
+        # Create right panel with QTextEdit
+        right_panel = QWidget(self)
+        right_layout = QVBoxLayout(right_panel)
+        right_panel.setLayout(right_layout)
 
-        # Add the tab widget and panel container to the main layout
-        main_layout.addWidget(tab_widget)
-        main_layout.addWidget(self.panel_container)
-        self.panel_container.hide()
+        text_edit = QTextEdit(self)
+        right_layout.addWidget(text_edit)
+
+        # Add the left and right panels to the main layout
+        main_layout.addWidget(left_panel)
+        main_layout.addWidget(right_panel)
 
         # Set central widget
         self.setCentralWidget(main_widget)
 
         # Set window properties
-        self.setWindowTitle("PyQt5 Tabs, Toolbar, and Dynamic Right Panel Example")
+        self.setWindowTitle("PyQt5 Two Panels Example")
         self.setGeometry(100, 100, 800, 600)
-
-    def toggle_panel(self):
-        window_size = window.size()
-
-        if self.panel_container.isHidden():
-            self.panel_container.show()
-            self.panel_container.setFixedWidth(200)
-            self.last_width = window_size.width()
-            self.setGeometry(100, 100, window_size.width()+200, 600)
-        else:
-            self.setGeometry(100, 100, self.last_width, 600)
-            self.panel_container.hide()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

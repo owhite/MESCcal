@@ -10,7 +10,7 @@ import Payload
 import FirstTab
 from functools import partial
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QApplication, QPlainTextEdit, QTabWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox
+from PyQt5.QtWidgets import QApplication, QPlainTextEdit, QTabWidget, QVBoxLayout, QGridLayout, QGroupBox
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 
@@ -67,31 +67,7 @@ class Mescal(QtWidgets.QMainWindow):
             self.tabWidget.addTab(tab,self.tab_data[t]['title'])
             count += 1
 
-        # Create main widget and set layout
-        main_widget = QtWidgets.QWidget(self)
-        main_layout = QHBoxLayout(main_widget)
-        main_widget.setLayout(main_layout)
-
-        # Create a container widget for the left panel
-        self.panel_container = QtWidgets.QWidget(self)
-        self.panel_layout = QVBoxLayout(self.panel_container)
-
-        # Create a container widget for the right panel
-        self.right_panel_container = QtWidgets.QWidget(self)
-        self.right_panel_layout = QVBoxLayout(self.right_panel_container)
-
-        # Add the tab widget, left panel, and right panel to the main layout
-        main_layout.addWidget(self.tabWidget)
-        main_layout.addWidget(self.panel_container)
-        main_layout.addWidget(self.right_panel_container)
-        self.right_panel_container.setFixedWidth(200)
-        self.panel_container.show()
-
         self.setCentralWidget(self.tabWidget)
-
-        # Set window properties
-        self.setWindowTitle("PyQt5 Tabs, Toolbar, and Dynamic Right Panel Example")
-        self.setGeometry(100, 100, 800, 600)
 
     def createStatusBar(self):
         self.setStatusBar( QtWidgets.QStatusBar(self) )
