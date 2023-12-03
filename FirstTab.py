@@ -19,18 +19,25 @@ class FirstTab(QtWidgets.QMainWindow):
         self.serialStreamingOn = parent.serialStreamingOn
         self.serialPayload = parent.serialPayload
         self.max_chars = 3000
+        self.customButtonHoverEnter = parent.customButtonHoverEnter
+        self.customButtonHoverLeave = parent.customButtonHoverLeave
+        self.showJsonBox = True
 
         self.initUI()
 
     def initUI(self):
-        self.jsonDataView   = jsonDataView(self)
+        # This allows you to see all the json streaming which is fine for debugging
+        #   but not really needed for operation
+        if self.showJsonBox:
+            self.jsonDataView   = jsonDataView(self)
         self.serialDataView = SerialDataView(self)
         self.serialSendView = SerialSendView(self)
 
         self.setCentralWidget( QtWidgets.QWidget(self) )
 
         layout = QtWidgets.QVBoxLayout( self.centralWidget() )
-        layout.addWidget(self.jsonDataView)
+        if self.showJsonBox:
+            layout.addWidget(self.jsonDataView) # uncomment to see a json box
         layout.addWidget(self.serialDataView)
         layout.addWidget(self.serialSendView)
         layout.setContentsMargins(3, 3, 3, 3)
@@ -58,19 +65,13 @@ class FirstTab(QtWidgets.QMainWindow):
                 # this does not test if it is already open and happy. 
                 print ( self.toolBar.portName() )
                 self.statusText.setText('Port open: error')
-                # self.getButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
-                # self.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
                 self.toolBar.portOpenButton.setChecked(False)
                 # self.toolBar.serialControlEnable(True)
             else:
-                # self.getButton.setStyleSheet("background-color : green;" "border :1px solid green;") 
-                # self.saveButton.setStyleSheet("background-color : green;" "border :1px solid green;") 
                 self.statusText.setText('Port opened')
                 # self.toolBar.serialControlEnable(False)
         else:
             self.port.close()
-            # self.getButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
-            # self.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
             self.statusText.setText('Port closed')
             # self.toolBar.serialControlEnable(True)
         
@@ -111,7 +112,10 @@ class FirstTab(QtWidgets.QMainWindow):
         remaining_text = re.sub(pattern, '', r) # remove all matches
 
         if len(text_inside_braces) > 0:
-            self.jsonDataView.appendJsonText(text_inside_braces, QtGui.QColor(0, 0, 0) )
+            # uncomment to see json box
+            if self.showJsonBox:
+                self.jsonDataView.appendJsonText(text_inside_braces, QtGui.QColor(0, 0, 0) )
+            self.parent.updateJsonData(text_inside_braces.replace('\r', ''))
             self.serialPayload.resetTimer() 
 
         # hoping this means we have a complete command block
@@ -119,7 +123,7 @@ class FirstTab(QtWidgets.QMainWindow):
             self.serialDataView.appendSerialText( remaining_text, QtGui.QColor(0, 0, 0) )
             self.parent.updateTabs()
             
-        self.serialPayload.setString(remaining_text) 
+        self.serialPayload.setString(remaining_text)
 
         # Last thing. bump the timer that serial data was received
 
@@ -202,6 +206,8 @@ class SerialSendView(QtWidgets.QWidget):
         self.sendButton = QtWidgets.QPushButton('Send')
         self.sendButton.clicked.connect(self.sendButtonClicked)
         self.sendButton.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Preferred)
+        self.sendButton.enterEvent = lambda event: parent.customButtonHoverEnter(event, 'Enter string and send cmd to serial')
+        self.sendButton.leaveEvent = parent.customButtonHoverLeave
         
         self.setLayout( QtWidgets.QHBoxLayout(self) )
         self.layout().addWidget(self.sendData)
@@ -218,11 +224,15 @@ class ToolBar(QtWidgets.QToolBar):
         super(ToolBar, self).__init__(parent)
         
         self.portOpenButton = QtWidgets.QPushButton('Open')
+        self.portOpenButton.enterEvent = lambda event: parent.customButtonHoverEnter(event, "Open or close selected port")
+        self.portOpenButton.leaveEvent = parent.customButtonHoverLeave
+        # self.portOpenButton.setToolTip('attempts serial port open')
         self.portOpenButton.setCheckable(True)
         self.portOpenButton.setMinimumHeight(32)
 
         self.portRefreshButton = QtWidgets.QPushButton('Refresh')
-        # self.portRefreshButton.setCheckable(True)
+        self.portRefreshButton.enterEvent = lambda event: parent.customButtonHoverEnter(event, "Refreshes available serial ports")
+        self.portRefreshButton.leaveEvent = parent.customButtonHoverLeave
         self.portRefreshButton.setMinimumHeight(32)
 
         self.portNames = QtWidgets.QComboBox(self)

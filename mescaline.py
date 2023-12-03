@@ -10,13 +10,13 @@ import Payload
 import FirstTab
 from functools import partial
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QApplication, QPlainTextEdit, QTabWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox
+from PyQt5.QtWidgets import QApplication, QPlainTextEdit, QTabWidget, QHBoxLayout, QVBoxLayout, QGroupBox, QGridLayout, QGroupBox, QSpacerItem, QSizePolicy
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 
-class Mescal(QtWidgets.QMainWindow):
+class Mescaline(QtWidgets.QMainWindow):
     def __init__(self):
-        super(Mescal, self).__init__()
+        super(Mescaline, self).__init__()
 
         ### Get a config file ### 
         file_path = "tab_contents.json"
@@ -50,75 +50,92 @@ class Mescal(QtWidgets.QMainWindow):
 
         ### Status Bar ###
         self.createStatusBar()
+        self.prevStatusText = ''
 
         ### Tabs ###
         self.tabWidget = QtWidgets.QTabWidget()
         self.tab_first = FirstTab.FirstTab(self)
-        t = self.tabWidget.addTab(self.tab_first,"Port")
-        # sets which tab to highlight
-        # self.tabWidget.setCurrentIndex(t)
+        self.tabWidget.addTab(self.tab_first,"PORT")
 
         self.tabs = []
         count = 0
         for t in self.tab_data.keys():
-            self.tab_title = t
+            self.tab_dict = self.tab_data[t]
+            self.boxes = self.tab_data[t]['boxes']
             tab = createTab(self)
             self.tabs.append(tab)
             self.tabWidget.addTab(tab,self.tab_data[t]['title'])
-            count += 1
 
-        # Create main widget and set layout
-        main_widget = QtWidgets.QWidget(self)
-        main_layout = QHBoxLayout(main_widget)
-        main_widget.setLayout(main_layout)
+        # self.tabWidget.setCurrentIndex(p)
 
-        # Create a container widget for the left panel
-        self.panel_container = QtWidgets.QWidget(self)
-        self.panel_layout = QVBoxLayout(self.panel_container)
-
-        # Create a container widget for the right panel
-        self.right_panel_container = QtWidgets.QWidget(self)
-        self.right_panel_layout = QVBoxLayout(self.right_panel_container)
-
-        # Add the tab widget, left panel, and right panel to the main layout
-        main_layout.addWidget(self.tabWidget)
-        main_layout.addWidget(self.panel_container)
-        main_layout.addWidget(self.right_panel_container)
-        self.right_panel_container.setFixedWidth(200)
-        self.panel_container.show()
-
+        self.setWindowTitle("Mescaline")
         self.setCentralWidget(self.tabWidget)
 
-        # Set window properties
-        self.setWindowTitle("PyQt5 Tabs, Toolbar, and Dynamic Right Panel Example")
-        self.setGeometry(100, 100, 800, 600)
-
     def createStatusBar(self):
-        self.setStatusBar( QtWidgets.QStatusBar(self) )
+        status_bar = QtWidgets.QStatusBar(self)
 
+        self.setStatusBar( status_bar )
         self.statusText = QtWidgets.QLabel(self)
         self.statusText.setAlignment(QtCore.Qt.AlignRight)
-        self.statusText.setText('Port closed')
+        self.statusText.setText('Status msgs here')
         self.statusBar().addPermanentWidget( self.statusText )
 
+        # Create a widget to hold the layout
+        self.layout_widget = QtWidgets.QWidget(self)
+
+        # Create a horizontal layout for the widget
+        layout = QtWidgets.QHBoxLayout(self.layout_widget)
+
+        # Create buttons
         self.getButton = QtWidgets.QPushButton("G")
         self.getButton.setStyleSheet("background-color : yellow;" "border :1px solid black;") 
         self.getButton.setFixedSize(30, 32)
         self.getButton.clicked.connect(self.getSerialData)
-        self.statusBar().addWidget( self.getButton )
+        self.getButton.enterEvent = lambda event: self.customButtonHoverEnter(event, "Get: retreive values from MESC, load into tabs")
+        self.getButton.leaveEvent = self.customButtonHoverLeave
 
         self.saveButton = QtWidgets.QPushButton("S")
         self.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid black;") 
+        self.saveButton.enterEvent = lambda event: self.customButtonHoverEnter(event, "Save: store all values in MESC")
+        self.saveButton.leaveEvent = self.customButtonHoverLeave
         self.saveButton.setFixedSize(30, 32)
         self.saveButton.clicked.connect(self.saveSerialData)
-        self.statusBar().addWidget( self.saveButton)
 
         self.streamButton = QtWidgets.QPushButton("D") # D for data
         self.streamButton.setStyleSheet("background-color : white;" "border :2px solid white;") 
+        self.streamButton.enterEvent = lambda event: self.customButtonHoverEnter(event, "Data: toggles data streaming from MESC")
+        self.streamButton.leaveEvent = self.customButtonHoverLeave
         self.streamButton.setFixedSize(30, 32)
         self.streamButton.setCheckable(True)
         self.streamButton.clicked.connect(self.getSerialStream)
-        self.statusBar().addWidget( self.streamButton)
+
+        # Add buttons and status label to the layout
+        layout.addWidget(self.getButton)
+        layout.addWidget(self.saveButton)
+        layout.addWidget(self.streamButton)
+
+        # Create a label for Vbus
+        self.vbusText = QtWidgets.QLabel('Vbus:\n  ')
+        layout.addWidget(self.vbusText)
+
+        # Create a label for PhaseA
+        self.phaseAText = QtWidgets.QLabel('PhaseA:\n  ')
+        w = layout.addWidget(self.phaseAText)
+
+        # Create a label for the status text
+        # self.statusText = QtWidgets.QLabel('Status msgs here')
+
+        # Set the widget containing the layout as the central widget of the status bar
+        status_bar.addWidget(self.layout_widget)
+
+    def customButtonHoverEnter(self, event, message):
+        self.prevStatusText = self.statusText.text()
+        self.statusText.setText(message)
+
+    def customButtonHoverLeave(self, event):
+        # I didnt like hos this behave, just clear the text
+        # self.statusText.setText(self.prevStatusText)
+        self.statusText.setText('Status msgs here')
 
     def serialButtonOff(self):
         self.streamButton.setStyleSheet("background-color : white;" "border :2px solid black;") 
@@ -126,7 +143,8 @@ class Mescal(QtWidgets.QMainWindow):
         self.serialStreamingOn = False
 
     def serialButtonOn(self):
-        self.streamButton.setStyleSheet("background-color : white;" "border :2px solid blue;") 
+        html_color = self.buttonColorGenerator(frequency=.4, amplitude=0.5, phase_shift=0, hue = 0.77) # Green hue = 0.33
+        self.streamButton.setStyleSheet(f'background-color: {html_color}; border: 1px solid green;')
         self.streamButton.setChecked(False)
         self.serialStreamingOn = True
 
@@ -142,27 +160,34 @@ class Mescal(QtWidgets.QMainWindow):
         self.port.write( text.encode() )
 
     def getSerialData(self):
-        self.statusText.setText('Serial: get')
+        self.statusText.setText('CMD: get')
         text = 'get\r\n'
         self.port.write( text.encode() )
 
     def saveSerialData(self):
-        print("run save");
+        self.statusText.setText('CMD: save')
+        text = 'save\r\n'
+        self.port.write( text.encode() )
 
-    # colors to make get button throb
-    def buttonColorGenerator(self, frequency, amplitude, phase_shift):
-        current_time = time.time()
-        angle = (2 * math.pi * frequency * current_time) + phase_shift
-        value = (math.sin(angle) + 1) / 2
-        value *= amplitude
-        hue = 0.33  # Green hue
-        saturation = 1.0
-        lightness = value
-        r, g, b = colorsys.hls_to_rgb(hue, lightness, saturation)
-        html_color = "#{:02X}{:02X}{:02X}".format(int(r * 255), int(g * 255), int(b * 255))
-        return html_color
+    def updateJsonData(self, str):
+        str = str.rstrip('\n')
+        for row in str.split('\n'):
+            try:
+                self.streamDict = json.loads(row)
+                self.updateStatusJson(self.streamDict)
+            except json.JSONDecodeError as e:
+                print("Getting bad json: {0}".format(row))
 
-    # this gets a string that may have commands in it
+    def updateStatusJson(self, streamDict):
+        f = round(streamDict['vbus'], 1)
+        self.vbusText.setText('Vbus:\n{0}'.format(f))
+
+        f = math.sqrt((streamDict['iq'] * streamDict['iq']) + (streamDict['id'] * streamDict['id']))
+        f = round(f, 1)
+        self.phaseAText.setText('PhaseA:\n{0}'.format(f))
+
+    # most of the tabs have values loaded from the mesc payload
+    #  this handles updating those values
     def updateTabs(self):
         if len(self.serialPayload.reportString()) > 0:
             self.serialPayload.parsePayload()
@@ -174,6 +199,17 @@ class Mescal(QtWidgets.QMainWindow):
 
         self.serialPayload.resetString()
 
+    # colors to make get button throb
+    def buttonColorGenerator(self, frequency, amplitude, phase_shift, hue):
+        current_time = time.time()
+        angle = (2 * math.pi * frequency * current_time) + phase_shift
+        value = (math.sin(angle) + 1) / 2
+        value *= amplitude
+        saturation = 1.0
+        lightness = value
+        r, g, b = colorsys.hls_to_rgb(hue, lightness, saturation)
+        html_color = "#{:02X}{:02X}{:02X}".format(int(r * 255), int(g * 255), int(b * 255))
+        return html_color
 
     # a timer that checks if anything has recently been transmitted
     def checkSerialStatus(self):
@@ -183,7 +219,7 @@ class Mescal(QtWidgets.QMainWindow):
             if self.serialWasOn:
                 self.statusText.setText('Port died')
         else:
-            html_color = self.buttonColorGenerator(frequency=.4, amplitude=0.5, phase_shift=0)
+            html_color = self.buttonColorGenerator(frequency=.4, amplitude=0.5, phase_shift=0, hue = 0.33) # Green hue = 0.33
             self.getButton.setStyleSheet(f'background-color: {html_color}; border: 1px solid green;')
             self.saveButton.setStyleSheet("background-color : #009900;" "border :1px solid green;") 
             self.serialWasOn = True
@@ -194,39 +230,62 @@ class Mescal(QtWidgets.QMainWindow):
             self.serialButtonOn()
                 
 class createTab(QtWidgets.QMainWindow): 
-
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
+        self.tab_dict = parent.tab_dict
+        self.boxes = self.tab_dict['boxes']
+        self.tab_title = self.tab_dict['title']
         self.port = parent.port
-        self.tab_data = parent.tab_data[parent.tab_title]
-        self.tab_title = parent.tab_title
         self.statusText = parent.statusText
         self.initUI()
 
     def initUI(self):
-        self.setCentralWidget( QtWidgets.QWidget(self) )
-
-        layout = QtWidgets.QFormLayout( self.centralWidget() )
-
         self.buttons =[]
         self.lineEdits ={}
-        count = 0
-        for t in self.tab_data['widgets']:
-            pb = QtWidgets.QPushButton(t['name'])
-            le = QtWidgets.QLineEdit()
-            self.lineEdits[t['name']] = le
-            pb.clicked.connect(partial(self.dataEntryButtonClicked, t['name'], le))
 
-            layout.addRow(pb, le)
-            count += 1
+        self.setCentralWidget( QtWidgets.QWidget(self) )
+        tab_layout = QtWidgets.QFormLayout( self.centralWidget() )
+
+        for box in self.boxes:
+            button_rows = box['buttons']
+            tab_layout.addWidget(self.createBox(box['name'], button_rows))
+
+    def createBox(self, box_name, button_rows):
+        group_box = QtWidgets.QGroupBox(box_name)
+        group_box_layout = QtWidgets.QVBoxLayout()
+        for row in button_rows:
+            group_box_layout.addLayout(self.createRow(row))
+
+        group_box.setLayout(group_box_layout)
+
+        return(group_box)
+
+    def createRow(self, row):
+        # Create a row with QHBoxLayout
+        row_layout = QtWidgets.QHBoxLayout()
+        row_layout.setSpacing(0)
+
+        for buttons in row:
+            pb = QtWidgets.QPushButton(buttons['name'])
+            le = QtWidgets.QLineEdit()
+            self.lineEdits[buttons['name']] = le
+            le.setFixedWidth(100)
+            pb.setFixedWidth(120)
+            pb.setToolTip(buttons['desc'])
+            pb.clicked.connect(partial(self.dataEntryButtonClicked, buttons['name'], le))
+            row_layout.addWidget(pb)
+            row_layout.addWidget(le)
+            row_layout.addSpacing(20)
+
+        row_layout.setAlignment(QtCore.Qt.AlignLeft)
+        return(row_layout)
 
     def updateValues(self, struct):
-        for w in self.tab_data['widgets']:
-            n = w['name']
-            r = struct.get(n)
-            if r:
-                self.lineEdits[n].setText(r['value'])
+        for n in struct['names']:
+            r = self.lineEdits.get(n)
+            if r is not None:
+                self.lineEdits[n].setText(struct[n]['value'])
 
     def is_int_or_float(self, s):
         try:
@@ -256,6 +315,6 @@ class createTab(QtWidgets.QMainWindow):
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    window = Mescal()
+    window = Mescaline()
     window.show()
     app.exec()
