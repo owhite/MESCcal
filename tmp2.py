@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QGroupBox, QPushButton, QLineEdit
 from PyQt5.QtCore import Qt
