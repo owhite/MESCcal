@@ -1,6 +1,6 @@
 import re
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QPlainTextEdit, QTabWidget, QVBoxLayout, QGridLayout, QGroupBox
+from PyQt5.QtWidgets import QPlainTextEdit, QTabWidget, QVBoxLayout, QGridLayout, QGroupBox, QRadioButton
 from PyQt5.QtCore import Qt
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 
@@ -21,23 +21,26 @@ class FirstTab(QtWidgets.QMainWindow):
         self.max_chars = 3000
         self.customButtonHoverEnter = parent.customButtonHoverEnter
         self.customButtonHoverLeave = parent.customButtonHoverLeave
-        self.showJsonBox = True
 
         self.initUI()
 
     def initUI(self):
         # This allows you to see all the json streaming which is fine for debugging
         #   but not really needed for operation
-        if self.showJsonBox:
-            self.jsonDataView   = jsonDataView(self)
-        self.serialDataView = SerialDataView(self)
+
+        self.jsonData = QtWidgets.QTextEdit(self) # making this one in the parent
+        self.jsonDataView   = jsonDataView(self)
+        self.serialDataView = SerialDataView(self) # these make their own QTextEdit boxes
         self.serialSendView = SerialSendView(self)
 
         self.setCentralWidget( QtWidgets.QWidget(self) )
-
         layout = QtWidgets.QVBoxLayout( self.centralWidget() )
-        if self.showJsonBox:
-            layout.addWidget(self.jsonDataView) # uncomment to see a json box
+        self.radio_button = QtWidgets.QRadioButton('Show json stream')
+        self.radio_button.toggled.connect(self.toggle_text_edit)
+        self.jsonData.setVisible(False)
+
+        layout.addWidget(self.radio_button)
+        layout.addWidget(self.jsonDataView) # uncomment to see a json box
         layout.addWidget(self.serialDataView)
         layout.addWidget(self.serialSendView)
         layout.setContentsMargins(3, 3, 3, 3)
@@ -51,6 +54,10 @@ class FirstTab(QtWidgets.QMainWindow):
         self.toolBar.portRefreshButton.clicked.connect(self.portRefresh)
         self.serialSendView.serialSendSignal.connect(self.sendFromPort)
         self.port.readyRead.connect(self.readFromPort)
+
+    def toggle_text_edit(self, checked):
+        # Toggle the visibility of the QTextEdit based on the radio button state
+        self.jsonData.setVisible(checked)
 
     def portOpen(self, flag):
         if flag:
@@ -112,10 +119,9 @@ class FirstTab(QtWidgets.QMainWindow):
         remaining_text = re.sub(pattern, '', r) # remove all matches
 
         if len(text_inside_braces) > 0:
-            # uncomment to see json box
-            if self.showJsonBox:
-                self.jsonDataView.appendJsonText(text_inside_braces, QtGui.QColor(0, 0, 0) )
-            self.parent.updateJsonData(text_inside_braces.replace('\r', ''))
+            t = text_inside_braces.replace('\r', '')
+            self.jsonDataView.appendJsonText(t, QtGui.QColor(0, 0, 0) )
+            self.parent.updateJsonData(t)
             self.serialPayload.resetTimer() 
 
         # hoping this means we have a complete command block
@@ -140,7 +146,10 @@ class jsonDataView(QtWidgets.QWidget):
         super(jsonDataView, self).__init__(parent)
 
         self.max_chars = parent.max_chars
-        self.jsonData = QtWidgets.QTextEdit(self)
+
+        self.jsonData = parent.jsonData
+
+        # self.jsonData = QtWidgets.QTextEdit(self)
         self.jsonData.setReadOnly(True)
         self.jsonData.setFontFamily('Courier New')
         self.jsonData.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)

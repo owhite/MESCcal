@@ -1,73 +1,58 @@
-import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QGroupBox, QPushButton, QLineEdit
-from PyQt5.QtCore import Qt
+#!/usr/bin/env python3
 
-class MyMainWindow(QMainWindow):
+import sys
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout, QTextEdit, QRadioButton
+
+class MyWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        # Create central widget
-        central_widget = QWidget()
+        self.initUI()
 
-        # Create a QGroupBox for buttons
-        group_box1 = QGroupBox("Vertical Buttons")
+    def initUI(self):
+        # Set up the main window
+        self.setWindowTitle('Tabs and QTextEdit Example')
+        self.setGeometry(100, 100, 600, 400)
 
-        # Create three QPushButton instances for the first row
-        h1_button1 = QPushButton("V Button 1")
-        h1_button2 = QPushButton("V Button 2")
-        h1_button3 = QPushButton("V Button 3")
-        h1_button1.setFixedWidth(100)
-        h1_button2.setFixedWidth(100)
-        h1_button3.setFixedWidth(100)
+        # Create a tab widget
+        tab_widget = QTabWidget(self)
+        self.setCentralWidget(tab_widget)
 
-        le1_1 = QLineEdit()
-        le1_1.setFixedWidth(100)
+        # Create tabs
+        tab1 = QWidget()
+        tab2 = QWidget()
 
-        # Create three QPushButton instances for the second row
-        h2_button1 = QPushButton("V Button 4")
-        h2_button2 = QPushButton("V Button 5")
-        h2_button3 = QPushButton("V Button 6")
-        h2_button1.setFixedWidth(100)
-        h2_button2.setFixedWidth(100)
-        h2_button3.setFixedWidth(100)
+        # Add tabs to the tab widget
+        tab_widget.addTab(tab1, 'Tab 1')
+        tab_widget.addTab(tab2, 'Tab 2')
 
-        # Create a QHBoxLayout for the buttons in the first row
-        row1_layout = QHBoxLayout()
-        row1_layout.addWidget(h1_button1)
-        row1_layout.addWidget(le1_1)
-        row1_layout.addWidget(h1_button2)
-        row1_layout.addWidget(h1_button3)
-        row1_layout.setAlignment(Qt.AlignLeft)
+        # Set up layout for Tab 1
+        layout_tab1 = QVBoxLayout(tab1)
 
-        # Create a QHBoxLayout for the buttons in the second row
-        row2_layout = QHBoxLayout()
-        row2_layout.addWidget(h2_button1)
-        row2_layout.addWidget(h2_button2)
-        row2_layout.addWidget(h2_button3)
-        row2_layout.setAlignment(Qt.AlignLeft)
+        # Create QTextEdit and QRadioButton
+        self.text_edit = QTextEdit()
+        self.radio_button = QRadioButton('Show QTextEdit')
 
-        # Create a QVBoxLayout for the main layout and add the two rows
-        group_box1_layout = QVBoxLayout()
-        group_box1_layout.addLayout(row1_layout)
-        group_box1_layout.addLayout(row2_layout)
+        # Connect the radio button's toggled signal to the slot
+        self.radio_button.toggled.connect(self.toggle_text_edit)
 
-        group_box1.setLayout(group_box1_layout)
+        # Add widgets to the layout
+        layout_tab1.addWidget(self.text_edit)
+        layout_tab1.addWidget(self.radio_button)
 
+        # Set up layout for Tab 2
+        layout_tab2 = QVBoxLayout(tab2)
+        layout_tab2.addWidget(QTextEdit('Content in Tab 2'))
 
-        # Create a layout for the central widget and add the QLabel and both QGroupBoxes
-        central_widget_layout = QVBoxLayout()
-        central_widget_layout.addWidget(group_box1)
-        central_widget.setLayout(central_widget_layout)
+    def toggle_text_edit(self, checked):
+        # Toggle the visibility of the QTextEdit based on the radio button state
+        self.text_edit.setVisible(checked)
 
-        # Set the central widget for the main window
-        self.setCentralWidget(central_widget)
-
-        # Set window properties
-        self.setWindowTitle("PyQt5 Central Widget Example")
-        self.setGeometry(100, 100, 600, 300)
-
-if __name__ == "__main__":
+def main():
     app = QApplication(sys.argv)
-    main_window = MyMainWindow()
-    main_window.show()
+    window = MyWindow()
+    window.show()
     sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()

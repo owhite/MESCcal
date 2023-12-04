@@ -242,7 +242,7 @@ class createTab(QtWidgets.QMainWindow):
 
     def initUI(self):
         self.buttons =[]
-        self.lineEdits ={}
+        self.entryItem ={}
 
         self.setCentralWidget( QtWidgets.QWidget(self) )
         tab_layout = QtWidgets.QFormLayout( self.centralWidget() )
@@ -267,15 +267,23 @@ class createTab(QtWidgets.QMainWindow):
         row_layout.setSpacing(0)
 
         for buttons in row:
+
+            if "comboBox" in buttons['type']:
+                entry_item = QtWidgets.QComboBox()
+                entry_item.addItem('none')
+                for i in buttons['list']:
+                    entry_item.addItem(i)
+            else:
+                entry_item = QtWidgets.QLineEdit()
+                
             pb = QtWidgets.QPushButton(buttons['name'])
-            le = QtWidgets.QLineEdit()
-            self.lineEdits[buttons['name']] = le
-            le.setFixedWidth(100)
+            self.entryItem[buttons['name']] = entry_item
+            entry_item.setFixedWidth(100)
             pb.setFixedWidth(120)
             pb.setToolTip(buttons['desc'])
-            pb.clicked.connect(partial(self.dataEntryButtonClicked, buttons['name'], le))
+            pb.clicked.connect(partial(self.dataEntryButtonClicked, buttons['name'], entry_item))
             row_layout.addWidget(pb)
-            row_layout.addWidget(le)
+            row_layout.addWidget(entry_item)
             row_layout.addSpacing(20)
 
         row_layout.setAlignment(QtCore.Qt.AlignLeft)
@@ -283,9 +291,12 @@ class createTab(QtWidgets.QMainWindow):
 
     def updateValues(self, struct):
         for n in struct['names']:
-            r = self.lineEdits.get(n)
+            r = self.entryItem.get(n)
             if r is not None:
-                self.lineEdits[n].setText(struct[n]['value'])
+                if isinstance(r, QtWidgets.QLineEdit):
+                    self.entryItem[n].setText(struct[n]['value'])
+                if isinstance(r, QtWidgets.QComboBox):
+                    r.setCurrentIndex(1 + int(struct[n]['value']))
 
     def is_int_or_float(self, s):
         try:
@@ -298,8 +309,16 @@ class createTab(QtWidgets.QMainWindow):
             except ValueError:
                 return False
 
-    def dataEntryButtonClicked(self, name, line):
-        n = line.text()
+    def dataEntryButtonClicked(self, name, entryItem):
+
+        if isinstance(entryItem, QtWidgets.QLineEdit):
+            n = entryItem.text()
+        if isinstance(entryItem, QtWidgets.QComboBox):
+            n = entryItem.currentIndex() - 1
+            if entryItem.currentIndex() == 0:
+                self.statusText.setText("no change, dont select \"none\"")
+                return()
+
         if not self.port.isOpen():
             self.statusText.setText('Port closed: cant update')
         else:

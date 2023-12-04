@@ -45,7 +45,7 @@
 		"name": "other values",
 		"buttons": [
 		    [
-			{"name": "hfi_type", "type": "singleText", "desc": "HFI type [0=None, 1=45deg, 2=d axis]"},
+			{"name": "hfi_type", "type": "comboBox", "desc": "HFI type [0=None, 1=45deg, 2=d axis]", "list": ["None", "45deg", "d_axis"]},
 			{"name": "park_curr", "type": "singleText", "desc": "max current for handbrake"}
 		    ],
 		    [
@@ -63,7 +63,8 @@
 		"name": "UART",
 		"buttons": [
 		    [
-			{"name": "motor_sensor", "type": "singleText", "desc": "0=SL, 1=Hall, 2=OL, 3=ABSENC, 4=INC_ENC, 5=HFI"}
+			{"name": "motor_sensor", "type": "comboBox", "desc": "0=SL, 1=Hall, 2=OL, 3=ABSENC, 4=INC_ENC, 5=HFI", "list": ["SL", "Hall", "OL", "ABSENC", "INC_ENC", "HFI"] }
+			 
 		    ],		    
 		    [
 			{"name": "ol_step", "type": "singleText", "desc": "Angle per PWM period openloop"},
@@ -86,7 +87,7 @@
 		"buttons": [
 		    [
 			{"name": "input_opt", "type": "singleText", "desc": "Inputs [1=ADC1 2=ADC2 4=PPM 8=UART]"},
-			{"name": "SL_sensor", "type": "singleText", "desc": "0=OL, 1=Hall, 2=PWMENC, 3=HFI"}
+			{"name": "SL_sensor", "type": "comboBox", "desc": "0=OL, 1=Hall, 2=PWMENC, 3=HFI", "list": ["Hall", "PWMENC", "HFI"]}
 		    ]
 		]
 	    },
