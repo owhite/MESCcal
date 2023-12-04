@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
 
-import sys
-import re
-import math
-import time
-import colorsys
-import json
+import sys, re, math, json
 import Payload
-import FirstTab
+import FirstTab, StatusBar
 from functools import partial
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QApplication, QPlainTextEdit, QTabWidget, QHBoxLayout, QVBoxLayout, QGroupBox, QGridLayout, QGroupBox, QSpacerItem, QSizePolicy
@@ -49,7 +44,7 @@ class Mescaline(QtWidgets.QMainWindow):
         self.serialPayload.startTimer()
 
         ### Status Bar ###
-        self.createStatusBar()
+        self.statusBar = StatusBar.createStatusBar(self)
         self.prevStatusText = ''
 
         ### Tabs ###
@@ -70,104 +65,6 @@ class Mescaline(QtWidgets.QMainWindow):
 
         self.setWindowTitle("Mescaline")
         self.setCentralWidget(self.tabWidget)
-
-    def createStatusBar(self):
-        status_bar = QtWidgets.QStatusBar(self)
-
-        self.setStatusBar( status_bar )
-        self.statusText = QtWidgets.QLabel(self)
-        self.statusText.setAlignment(QtCore.Qt.AlignRight)
-        self.statusText.setText('Status msgs here')
-        self.statusBar().addPermanentWidget( self.statusText )
-
-        # Create a widget to hold the layout
-        self.layout_widget = QtWidgets.QWidget(self)
-
-        # Create a horizontal layout for the widget
-        layout = QtWidgets.QHBoxLayout(self.layout_widget)
-
-        # Create buttons
-        self.getButton = QtWidgets.QPushButton("G")
-        self.getButton.setStyleSheet("background-color : yellow;" "border :1px solid black;") 
-        self.getButton.setFixedSize(30, 32)
-        self.getButton.clicked.connect(self.getSerialData)
-        self.getButton.enterEvent = lambda event: self.customButtonHoverEnter(event, "Get: retreive values from MESC, load into tabs")
-        self.getButton.leaveEvent = self.customButtonHoverLeave
-
-        self.saveButton = QtWidgets.QPushButton("S")
-        self.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid black;") 
-        self.saveButton.enterEvent = lambda event: self.customButtonHoverEnter(event, "Save: store all values in MESC")
-        self.saveButton.leaveEvent = self.customButtonHoverLeave
-        self.saveButton.setFixedSize(30, 32)
-        self.saveButton.clicked.connect(self.saveSerialData)
-
-        self.streamButton = QtWidgets.QPushButton("D") # D for data
-        self.streamButton.setStyleSheet("background-color : white;" "border :2px solid white;") 
-        self.streamButton.enterEvent = lambda event: self.customButtonHoverEnter(event, "Data: toggles data streaming from MESC")
-        self.streamButton.leaveEvent = self.customButtonHoverLeave
-        self.streamButton.setFixedSize(30, 32)
-        self.streamButton.setCheckable(True)
-        self.streamButton.clicked.connect(self.getSerialStream)
-
-        # Add buttons and status label to the layout
-        layout.addWidget(self.getButton)
-        layout.addWidget(self.saveButton)
-        layout.addWidget(self.streamButton)
-
-        # Create a label for Vbus
-        self.vbusText = QtWidgets.QLabel('Vbus:\n  ')
-        layout.addWidget(self.vbusText)
-
-        # Create a label for PhaseA
-        self.phaseAText = QtWidgets.QLabel('PhaseA:\n  ')
-        w = layout.addWidget(self.phaseAText)
-
-        # Create a label for the status text
-        # self.statusText = QtWidgets.QLabel('Status msgs here')
-
-        # Set the widget containing the layout as the central widget of the status bar
-        status_bar.addWidget(self.layout_widget)
-
-    def customButtonHoverEnter(self, event, message):
-        self.prevStatusText = self.statusText.text()
-        self.statusText.setText(message)
-
-    def customButtonHoverLeave(self, event):
-        # I didnt like hos this behave, just clear the text
-        # self.statusText.setText(self.prevStatusText)
-        self.statusText.setText('Status msgs here')
-
-    def serialButtonOff(self):
-        self.streamButton.setStyleSheet("background-color : white;" "border :2px solid black;") 
-        self.streamButton.setChecked(True)
-        self.serialStreamingOn = False
-
-    def serialButtonOn(self):
-        html_color = self.buttonColorGenerator(frequency=.4, amplitude=0.5, phase_shift=0, hue = 0.77) # Green hue = 0.33
-        self.streamButton.setStyleSheet(f'background-color: {html_color}; border: 1px solid green;')
-        self.streamButton.setChecked(False)
-        self.serialStreamingOn = True
-
-    def getSerialStream(self, checked):
-        if checked: # then stop things
-            self.statusText.setText('Serial: no streaming')
-            text = 'status stop\r\n'
-        else:
-            self.statusText.setText('Serial: streaming')
-            text = 'status json\r\n'
-            self.serialPayload.resetTimer()
-
-        self.port.write( text.encode() )
-
-    def getSerialData(self):
-        self.statusText.setText('CMD: get')
-        text = 'get\r\n'
-        self.port.write( text.encode() )
-
-    def saveSerialData(self):
-        self.statusText.setText('CMD: save')
-        text = 'save\r\n'
-        self.port.write( text.encode() )
 
     def updateJsonData(self, str):
         str = str.rstrip('\n')
@@ -199,23 +96,11 @@ class Mescaline(QtWidgets.QMainWindow):
 
         self.serialPayload.resetString()
 
-    # colors to make get button throb
-    def buttonColorGenerator(self, frequency, amplitude, phase_shift, hue):
-        current_time = time.time()
-        angle = (2 * math.pi * frequency * current_time) + phase_shift
-        value = (math.sin(angle) + 1) / 2
-        value *= amplitude
-        saturation = 1.0
-        lightness = value
-        r, g, b = colorsys.hls_to_rgb(hue, lightness, saturation)
-        html_color = "#{:02X}{:02X}{:02X}".format(int(r * 255), int(g * 255), int(b * 255))
-        return html_color
-
     # a timer that checks if anything has recently been transmitted
     def checkSerialStatus(self):
         if not self.port.isDataTerminalReady(): # seems to indicate the port is dead
-            self.getButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
-            self.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
+            self.statusBar.getButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
+            self.statusBar.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
             if self.serialWasOn:
                 self.statusText.setText('Port died')
         else:
@@ -225,9 +110,9 @@ class Mescaline(QtWidgets.QMainWindow):
             self.serialWasOn = True
 
         if (self.serialPayload.reportTimer()) > 0.2: # checks if json is coming in
-            self.serialButtonOff()
+            self.statusBar.serialButtonOff()
         else:
-            self.serialButtonOn()
+            self.statusBar.serialButtonOn()
                 
 class createTab(QtWidgets.QMainWindow): 
     def __init__(self, parent):
@@ -237,7 +122,7 @@ class createTab(QtWidgets.QMainWindow):
         self.boxes = self.tab_dict['boxes']
         self.tab_title = self.tab_dict['title']
         self.port = parent.port
-        self.statusText = parent.statusText
+        self.statusText = parent.statusBar.statusText
         self.initUI()
 
     def initUI(self):

@@ -12,15 +12,15 @@ class FirstTab(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.parent = parent
         self.port = parent.port
-        self.statusText = parent.statusBar.statusText
-        self.getButton = parent.statusBar.getButton
-        self.saveButton = parent.statusBar.saveButton
-        self.tButton = parent.statusBar.getButton
+        self.statusText = parent.statusText
+        self.getButton = parent.getButton
+        self.saveButton = parent.saveButton
+        self.tButton = parent.getButton
         self.serialStreamingOn = parent.serialStreamingOn
         self.serialPayload = parent.serialPayload
         self.max_chars = 3000
-        self.customButtonHoverEnter = parent.statusBar.customButtonHoverEnter
-        self.customButtonHoverLeave = parent.statusBar.customButtonHoverLeave
+        self.customButtonHoverEnter = parent.customButtonHoverEnter
+        self.customButtonHoverLeave = parent.customButtonHoverLeave
 
         self.initUI()
 
