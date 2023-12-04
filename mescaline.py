@@ -77,11 +77,11 @@ class Mescaline(QtWidgets.QMainWindow):
 
     def updateStatusJson(self, streamDict):
         f = round(streamDict['vbus'], 1)
-        self.vbusText.setText('Vbus:\n{0}'.format(f))
+        self.statusBar.vbusText.setText('Vbus:\n{0}'.format(f))
 
         f = math.sqrt((streamDict['iq'] * streamDict['iq']) + (streamDict['id'] * streamDict['id']))
         f = round(f, 1)
-        self.phaseAText.setText('PhaseA:\n{0}'.format(f))
+        self.statusBar.phaseAText.setText('PhaseA:\n{0}'.format(f))
 
     # most of the tabs have values loaded from the mesc payload
     #  this handles updating those values
@@ -102,11 +102,11 @@ class Mescaline(QtWidgets.QMainWindow):
             self.statusBar.getButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
             self.statusBar.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
             if self.serialWasOn:
-                self.statusText.setText('Port died')
+                self.statusBar.statusText.setText('Port died')
         else:
-            html_color = self.buttonColorGenerator(frequency=.4, amplitude=0.5, phase_shift=0, hue = 0.33) # Green hue = 0.33
-            self.getButton.setStyleSheet(f'background-color: {html_color}; border: 1px solid green;')
-            self.saveButton.setStyleSheet("background-color : #009900;" "border :1px solid green;") 
+            html_color = self.statusBar.buttonColorGenerator(frequency=.4, amplitude=0.5, phase_shift=0, hue = 0.33) # Green hue = 0.33
+            self.statusBar.getButton.setStyleSheet(f'background-color: {html_color}; border: 1px solid green;')
+            self.statusBar.saveButton.setStyleSheet("background-color : #009900;" "border :1px solid green;") 
             self.serialWasOn = True
 
         if (self.serialPayload.reportTimer()) > 0.2: # checks if json is coming in

@@ -14,6 +14,7 @@ class createStatusBar(QtWidgets.QMainWindow):
         self.parent = parent
         self.setStatusBar = self.parent.setStatusBar
         self.statusBar = self.parent.statusBar
+        self.port = self.parent.port
         self.initUI()
 
     def initUI(self):
