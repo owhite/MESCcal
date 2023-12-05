@@ -5,22 +5,13 @@ import inspect
 import importlib.util
 
 def inspect_module(name, module):
-    # Inspect all attributes in the module
     module_attributes = dir(module)
-
-    # Filter out functions and methods
     functions_and_methods = [attr for attr in module_attributes if callable(getattr(module, attr))]
-
-    # Print functions and methods
-    print("Functions and Methods in module: {0} :: {1}".format(name, functions_and_methods))
-
-    # Recursively inspect classes
     classes = [attr for attr in module_attributes if isinstance(getattr(module, attr), type)]
-    print(classes)
+    r = False
     if name in classes and 'MescalineSafe' in classes:
-        print("SAFE")
-    else:
-        print("NOT SAFE")
+        r = True
+    return(r)
 
 def findModules(directory):
     python_files = [f for f in os.listdir(directory) if f.endswith('.py')]
@@ -29,7 +20,6 @@ def findModules(directory):
     for py_file in python_files:
         module_name = os.path.splitext(py_file)[0]
         full_module_name = f'{module_name}'  # Adjust the package name
-        print(full_module_name)
 
         try:
             module_path = os.path.join(directory, py_file)
@@ -38,8 +28,12 @@ def findModules(directory):
             spec.loader.exec_module(module)
 
             try:
-                inspect_module(full_module_name, module)
+                if inspect_module(full_module_name, module):
+                    print("SAFE: {0}".format(full_module_name))
+                else: 
+                    print("NOT SAFE: {0}".format(full_module_name))
             except Exception as e:
+                print(f"ERROR not seeing the right functions in module: {e}")
                 pass
 
         except Exception as e:
