@@ -1,8 +1,31 @@
 #!/usr/bin/env python3
 
-import os
+import ast, os
 import inspect
 import importlib.util
+
+# this parses the files but does not load the modules. 
+def testWithAST(directory):
+    python_files = [f for f in os.listdir(directory) if f.endswith('.py')]
+
+    returnList = []
+    for name in python_files:
+        file_path = directory + '/' + name
+        name = name.replace('.py', '')
+
+        with open(file_path, 'r') as file:
+            tree = ast.parse(file.read(), filename=file_path)
+
+        class_names = []
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                class_names.append(node.name)
+
+        if "MescalineSafe" in class_names and name in class_names:
+            returnList.append(file_path)
+
+    return(returnList)
 
 def inspect_module(name, module):
     module_attributes = dir(module)
@@ -13,12 +36,14 @@ def inspect_module(name, module):
         r = True
     return(r)
 
-def findModules(directory):
+def loadModules(directory):
     python_files = [f for f in os.listdir(directory) if f.endswith('.py')]
+    print(python_files)
 
     l = []
     for py_file in python_files:
         module_name = os.path.splitext(py_file)[0]
+        print(module_name)
         full_module_name = f'{module_name}'  # Adjust the package name
 
         try:
@@ -41,53 +66,15 @@ def findModules(directory):
 
     return(l)
 
-
-def load_and_run_module(directory, class_name):
-    python_files = [f for f in os.listdir(directory) if f.endswith('.py')]
-
-    for py_file in python_files:
-        module_name = os.path.splitext(py_file)[0]
-        full_module_name = f'{module_name}'  # Adjust the package name
-
-        try:
-            # Dynamically loads modules. Completely unsafe: in that it
-            #   could load a malicious module from this directory
-            module_path = os.path.join(directory, py_file)
-            spec = importlib.util.spec_from_file_location(full_module_name, module_path)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-
-            safeToLoad = False
-            names = []
-            for name, obj in inspect.getmembers(module):
-                names.append(name)
-            if "MescalineSafe" in names and \
-               full_module_name in names:
-                    safeToLoad = True
-                    
-            if safeToLoad:
-                for name, obj in inspect.getmembers(module):
-                    if name == full_module_name:
-                        print ("LAUNCH: {0}".format(name))
-                    if name not in "__builtins__":
-                        print("stuff: {0} :: {1}".format(name, obj))
-
-                if hasattr(module, 'ExampleModule') and callable(getattr(module.ExampleModule, 'print_info', None)):
-                    # Create an instance of the class and run the print_info method
-                    instance = module.ExampleModule()
-                    instance.print_info()
-                else:
-                    print(f'Module {full_module_name} does not have the ExampleModule class or the print_info method.')
-
-        except Exception as e:
-            print(f"Error loading or running module {full_module_name}: {e}")
-
 # Specify the directory containing the modules
 module_directory = './APPS'
 
+classes_found = testWithAST(module_directory)
 
-l = findModules(module_directory)
-# load_and_run_module(module_directory, "ExampleModule")
+print(f'Classes found in {module_directory}: {classes_found}')
+
+l = loadModules(module_directory)
+
 
 
 
