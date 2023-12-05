@@ -106,7 +106,7 @@ class createStatusBar(QtWidgets.QMainWindow):
 
     def serialButtonOn(self):
         # Green hue = 0.33 -- not sure how it works
-        html_color = self.buttonColorGenerator(frequency=.4, amplitude=0.5, phase_shift=0, hue = 0.77) 
+        html_color = self.buttonColorGenerator(frequency=.4, amplitude=0.8, phase_shift=0, hue = 0.77) 
         self.streamButton.setStyleSheet(f'background-color: {html_color}; border: 1px solid green;')
         self.streamButton.setChecked(False)
         self.serialStreamingOn = True
@@ -138,7 +138,7 @@ class createStatusBar(QtWidgets.QMainWindow):
         value = (math.sin(angle) + 1) / 2
         value *= amplitude
         saturation = 1.0
-        lightness = value
+        lightness = (1 - value) - .2
         r, g, b = colorsys.hls_to_rgb(hue, lightness, saturation)
         html_color = "#{:02X}{:02X}{:02X}".format(int(r * 255), int(g * 255), int(b * 255))
         return html_color
