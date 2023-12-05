@@ -83,6 +83,10 @@ class Mescaline(QtWidgets.QMainWindow):
         f = round(f, 1)
         self.statusBar.phaseAText.setText('PhaseA:\n{0}'.format(f))
 
+        self.statusBar.ehzText.setText('eHz:\n{0}'.format(round(streamDict['ehz'], 1)))
+        self.statusBar.tmosText.setText('TMOS:\n{0}'.format(round(streamDict['TMOS'], 1)))
+        self.statusBar.tmotText.setText('TMOT:\n{0}'.format(round(streamDict['TMOT'], 1)))
+
     # most of the tabs have values loaded from the mesc payload
     #  this handles updating those values
     def updateTabs(self):
