@@ -4,7 +4,7 @@ import os
 import inspect
 import importlib.util
 
-def inspect_module(module):
+def inspect_module(name, module):
     # Inspect all attributes in the module
     module_attributes = dir(module)
 
@@ -12,14 +12,15 @@ def inspect_module(module):
     functions_and_methods = [attr for attr in module_attributes if callable(getattr(module, attr))]
 
     # Print functions and methods
-    print(f'Functions and Methods in module: {functions_and_methods}')
+    print("Functions and Methods in module: {0} :: {1}".format(name, functions_and_methods))
 
     # Recursively inspect classes
     classes = [attr for attr in module_attributes if isinstance(getattr(module, attr), type)]
-    for class_name in classes:
-        class_obj = getattr(module, class_name)
-        print(f'Class: {class_name}')
-        # inspect_module(class_obj)
+    print(classes)
+    if name in classes and 'MescalineSafe' in classes:
+        print("SAFE")
+    else:
+        print("NOT SAFE")
 
 def findModules(directory):
     python_files = [f for f in os.listdir(directory) if f.endswith('.py')]
@@ -37,7 +38,7 @@ def findModules(directory):
             spec.loader.exec_module(module)
 
             try:
-                inspect_module(module)
+                inspect_module(full_module_name, module)
             except Exception as e:
                 pass
 
@@ -45,16 +46,6 @@ def findModules(directory):
             print(f"ERROR loading or running module: {e}")
 
     return(l)
-
-def holdingTank():
-    
-    names = []
-    for name, obj in inspect.getmembers(module):
-        names.append(name)
-
-        if 'MescalineSafe' in names:
-            l.append(full_module_name)
-
 
 
 def load_and_run_module(directory, class_name):
