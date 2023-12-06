@@ -67,9 +67,8 @@ class Mescaline(QtWidgets.QWidget):
         self.show()
 
     def send_data_to_new_window(self):
-        print(self.jsonListCounter)
         self.jsonListCounter += 1
-        if self.jsonListCounter > self.jsonListLen:
+        if self.jsonListCounter > self.jsonListLen - 1:
             self.jsonListCounter = 0
 
         d = self.jsonList[self.jsonListCounter]
