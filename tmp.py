@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton
-
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QVBoxLayout
 
 class LabelApp(QWidget):
     def __init__(self):
@@ -11,40 +10,36 @@ class LabelApp(QWidget):
         self.init_ui()
 
     def init_ui(self):
+        self.setGeometry(300, 300, 300, 150)
+        self.setWindowTitle('Label Example')
+
         self.layout = QVBoxLayout(self)
 
-        # Create two buttons
-        self.create_button = QPushButton('Create Labels', self)
-        self.create_button.clicked.connect(self.create_labels)
-        self.layout.addWidget(self.create_button)
+        self.create_label_button = QPushButton('Create Label', self)
+        self.create_label_button.clicked.connect(self.create_label)
 
-        self.delete_button = QPushButton('Delete Labels', self)
-        self.delete_button.clicked.connect(self.delete_labels)
-        self.layout.addWidget(self.delete_button)
+        self.remove_label_button = QPushButton('Remove Label', self)
+        self.remove_label_button.clicked.connect(self.remove_label)
 
-        # Create an empty list to store labels
-        self.labels = []
+        self.layout.addWidget(self.create_label_button)
+        self.layout.addWidget(self.remove_label_button)
 
-    def create_labels(self):
-        # Create three labels and add them to the layout and the list
-        for i in range(3):
-            label = QLabel(f'Label {i+1}', self)
-            self.layout.addWidget(label)
-            self.labels.append(label)
+        self.label = None  # Initialize label as None
 
-    def delete_labels(self):
-        # Delete each label from the layout and remove it from the list
-        for label in self.labels:
-            label.deleteLater()
-        self.labels = []
+        self.show()
 
+    def create_label(self):
+        if self.label is None:
+            self.label = QLabel('Hello, I am a label!', self)
+            self.layout.addWidget(self.label)
 
-def run_app():
-    app = QApplication(sys.argv)
-    label_app = LabelApp()
-    label_app.show()
-    sys.exit(app.exec_())
-
+    def remove_label(self):
+        if self.label is not None:
+            self.layout.removeWidget(self.label)
+            self.label.deleteLater()  # Delete the label widget
+            self.label = None  # Set label to None to recreate it if needed
 
 if __name__ == '__main__':
-    run_app()
+    app = QApplication(sys.argv)
+    window = LabelApp()
+    sys.exit(app.exec_())
