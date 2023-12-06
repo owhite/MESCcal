@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 
+import sys
 import sys, re, math, json
 import Payload
 import FirstTab, StatusBar
 from functools import partial
+
+import secondWindow
+
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QApplication, QPlainTextEdit, QTabWidget, QHBoxLayout, QVBoxLayout, QGroupBox, QGridLayout, QGroupBox, QSpacerItem, QSizePolicy
 from PyQt5.QtCore import Qt, QTimer
@@ -64,16 +68,49 @@ class Mescaline(QtWidgets.QMainWindow):
         # self.tabWidget.setCurrentIndex(p)
 
         self.setWindowTitle("Mescaline")
+
         self.setCentralWidget(self.tabWidget)
+
+    # XXXX
+    def open_new_window(self, flag):
+        if self.statusBar.winOpenButton.isChecked():
+            self.statusBar.winOpenButton.setStyleSheet("background-color: lightgreen; border: 1px solid green;")
+            self.new_window = secondWindow.secondWindow()
+            self.new_window.show()
+        else:
+            self.statusBar.winOpenButton.setStyleSheet("background-color: white; border: 1px solid green;")
+            # self.statusBar.winOpenButton.setChecked(False)
+            if hasattr(self, 'new_window'):
+                self.new_window.close()
+
+    def close_new_window(self):
+        if hasattr(self, 'new_window'):
+            print("closing window")
+            self.new_window.close()
+
+    def send_data_to_new_window(self, d):
+        if hasattr(self, 'new_window'):
+            self.new_window.receive_data(d)
+
+    def closeEvent(self, event):
+        # Override the closeEvent method to detect when the window is closed
+        print("Main window closing")
+        if hasattr(self, 'new_window'):
+            print("closing window")
+            self.new_window.close()
+        event.accept()
 
     def updateJsonData(self, str):
         str = str.rstrip('\n')
+        d = {}
         for row in str.split('\n'):
             try:
                 self.streamDict = json.loads(row)
                 self.updateStatusJson(self.streamDict)
+                self.send_data_to_new_window(self.streamDict)
             except json.JSONDecodeError as e:
                 print("Getting bad json: {0}".format(row))
+
 
     def updateStatusJson(self, streamDict):
         f = round(streamDict['vbus'], 1)
@@ -226,3 +263,4 @@ if __name__ == '__main__':
     window = Mescaline()
     window.show()
     app.exec()
+

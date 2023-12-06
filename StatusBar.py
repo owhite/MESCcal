@@ -16,6 +16,8 @@ class createStatusBar(QtWidgets.QMainWindow):
         self.parent = parent
         self.setStatusBar = parent.setStatusBar
         self.statusBar = parent.statusBar
+        self.open_new_window  = parent.open_new_window
+        self.close_new_window  = parent.close_new_window
         self.port = parent.port
         self.serialPayload = parent.serialPayload
         self.initUI()
@@ -68,13 +70,25 @@ class createStatusBar(QtWidgets.QMainWindow):
         self.tmotText = QtWidgets.QLabel('TMOT:\n  ')
         self.ehzText = QtWidgets.QLabel('eHz:\n  ')
 
+        self.winOpenButton = QtWidgets.QPushButton('Win')
+        self.winOpenButton.clicked.connect(self.open_new_window)
+        self.winOpenButton.setCheckable(True)
+        self.winOpenButton.setStyleSheet("background-color: white; border: 1px solid green;")
+
         h1.addWidget(self.vbusText)
         h1.addWidget(self.phaseAText)
         h1.addWidget(self.tmosText)
         h1.addWidget(self.tmotText)
         h1.addWidget(self.ehzText)
+        h1.addWidget(self.winOpenButton)
         layout.addWidget(container1)
 
+        # self.button_open = QtWidgets.QPushButton('Open', self)
+        # self.button_open.clicked.connect(self.open_new_window)
+        
+        # self.button_send_data = QtWidgets.QPushButton('Send Data', self)
+        # self.button_send_data.clicked.connect(lambda: self.send_data_to_new_window("Hello from Main Window"))
+        # h1.addWidget(self.button_send_data)
 
         # container2 = QtWidgets.QWidget()
         # h2 = QtWidgets.QHBoxLayout(container2)
@@ -88,7 +102,6 @@ class createStatusBar(QtWidgets.QMainWindow):
 
         self.status_bar.addWidget(self.layout_widget)
         self.statusBar().addPermanentWidget( self.statusText )
-
 
     def customButtonHoverEnter(self, event, message):
         self.prevStatusText = self.statusText.text()
