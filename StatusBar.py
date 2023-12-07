@@ -17,7 +17,6 @@ class createStatusBar(QtWidgets.QMainWindow):
         self.setStatusBar = parent.setStatusBar
         self.statusBar = parent.statusBar
         self.open_new_window  = parent.open_new_window
-        self.close_new_window  = parent.close_new_window
         self.port = parent.port
         self.serialPayload = parent.serialPayload
         self.initUI()

@@ -1,4 +1,6 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
+
+from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider
 
 class secondWindow(QWidget):
     def __init__(self):
