@@ -10,9 +10,12 @@ class appsTab(QtWidgets.QMainWindow):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.windows = parent.windows
         self.classes_found = parent.classes_found
+        self.windows = parent.windows
+        self.module_directory = parent.module_directory
         self.port = parent.port
+        self.loadModules = parent.loadModules.load
+
         self.initUI()
 
     def initUI(self):
@@ -40,8 +43,8 @@ class appsTab(QtWidgets.QMainWindow):
         self.buttons = []
 
         # Create push buttons using a for loop
-        for i in classes:
-            push_button = QtWidgets.QPushButton(i)
+        for name in self.classes_found.keys():
+            push_button = QtWidgets.QPushButton(name)
             push_button.setCheckable(True)
             self.buttons.append(push_button)
             layout.addWidget(push_button)
@@ -54,7 +57,15 @@ class appsTab(QtWidgets.QMainWindow):
 
     def on_button_clicked(self, button):
         sender_button = self.sender()
-        print(f'Clicked button: {sender_button.text()}, Checked: {sender_button.isChecked()}')
+        if sender_button.isChecked():
+            name = sender_button.text()
+            print('run: {0} :: {1}'.format(name, self.classes_found[name]))
+            self.windows = self.loadModules(self.module_directory, [self.classes_found[name]])
+            print("HERE")
+            print(self.windows)
+        else:
+            print(self.windows)
+            print('stop: {0} :: {1}'.format(name, self.classes_found[name]))
 
     def updateButtons(self, checked):
         # Toggle the visibility of the QTextEdit based on the radio button state

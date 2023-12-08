@@ -33,6 +33,7 @@ class Mescaline(QtWidgets.QMainWindow):
         self.loadModules = mescalineModuleLoad.loadModules()
 
         self.module_directory = './APPS'
+        self.windows = []
 
         ### Window ### 
         self.move(QApplication.desktop().availableGeometry().bottomLeft())
@@ -72,7 +73,7 @@ class Mescaline(QtWidgets.QMainWindow):
         # Specify the directory containing the modules
         self.classes_found = self.loadModules.testWithAST(self.module_directory)
         print(f'Classes found in {self.module_directory}: {self.classes_found}')
-        self.windows = self.loadModules.load(self.module_directory, self.classes_found)
+        # self.loadModules.load(self.module_directory, self.classes_found)
 
         self.appsWidget = QtWidgets.QTabWidget()
         self.appsTab = appsTab.appsTab(self)
@@ -97,6 +98,7 @@ class Mescaline(QtWidgets.QMainWindow):
                 self.new_window.close()
 
     def send_data_to_new_window(self, d):
+        print(self.windows)
         if len(self.windows) > 0:
             for w in self.windows:
                 if hasattr(w, 'receive_data'):

@@ -24,6 +24,7 @@ class loadModules:
                 if hasattr(loaded_module, full_module_name):
                     # Instantiate the secondWindow class and show it
                     module_class = getattr(loaded_module, full_module_name)
+                    print(module_class)
                     self.window_instance = module_class()
                     self.window_instance.show()
                     l.append(self.window_instance)
@@ -39,7 +40,7 @@ class loadModules:
     def testWithAST(self, directory):
         python_files = [f for f in os.listdir(directory) if f.endswith('.py')]
 
-        returnList = []
+        returnDict = {}
         for name in python_files:
             file_path = directory + '/' + name
             name = name.replace('.py', '')
@@ -54,9 +55,9 @@ class loadModules:
                     class_names.append(node.name)
 
             if "MescalineSafe" in class_names and name in class_names:
-                returnList.append(file_path)
+                returnDict[name] = file_path
 
-        return(returnList)
+        return(returnDict)
 
     def inspect_module(self, name, module):
         module_attributes = dir(module)
