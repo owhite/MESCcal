@@ -1,45 +1,42 @@
 #!/usr/bin/env python3
 
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QRadioButton, QPushButton, QLabel
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTextBrowser, QVBoxLayout, QWidget
+from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtCore import Qt, QUrl
 
-class Example(QWidget):
+class TextDisplayWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.initUI()
+        self.setWindowTitle('Text Display Example')
 
-    def initUI(self):
-        vbox = QVBoxLayout()
+        # Create a QTextBrowser with a clickable link
+        text = """
+        This is an example of a hotlink. Click <a href="http://www.google.com">here</a> to open the website in your browser.
+        """
 
-        self.setLayout(vbox)
+        self.text_browser = QTextBrowser()
+        self.text_browser.setOpenExternalLinks(True)
+        self.text_browser.setHtml(text)
+        self.text_browser.anchorClicked.connect(self.open_link)
 
-        # List to hold references to push buttons
-        self.buttons = []
+        # Set up the layout
+        layout = QVBoxLayout()
+        layout.addWidget(self.text_browser)
 
-        # Create push buttons using a for loop
-        for i in range(1, 5):
-            push_button = QPushButton(f'Button {i}')
-            push_button.setCheckable(True)
-            self.buttons.append(push_button)
-            vbox.addWidget(push_button)
+        central_widget = QWidget()
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
 
-        # Connect the clicked signal to a slot function
-        for button in self.buttons:
-            button.clicked.connect(self.on_button_clicked)
-
-        self.setWindowTitle('QButtonGroup Example')
-        self.show()
-
-    def on_button_clicked(self, button):
-        sender_button = self.sender()
-        print(f'Clicked button: {sender_button.text()}, Checked: {sender_button.isChecked()}')
-
-
-def main():
-    app = QApplication(sys.argv)
-    ex = Example()
-    sys.exit(app.exec_())
+    def open_link(self, link):
+        # Open the link in the user's default web browser
+        QDesktopServices.openUrl(QUrl(link.toString()))
 
 if __name__ == '__main__':
-    main()
+    app = QApplication(sys.argv)
+
+    main_window = TextDisplayWindow()
+    main_window.show()
+
+    sys.exit(app.exec_())

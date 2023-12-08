@@ -2,13 +2,17 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider
 
-class secondWindow(QWidget):
+class MescalineSafe:
+    # ha ha
+    pass
+
+class showData(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle('Second Window')
+        self.setWindowTitle('Streaming Data')
 
         self.layout = QVBoxLayout()
 
@@ -58,6 +62,6 @@ class secondWindow(QWidget):
 if __name__ == '__main__':
     # For testing purposes
     app = QApplication([])
-    window = secondWindow()
+    window = showData()
     window.show()
     sys.exit(app.exec_())

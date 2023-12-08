@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 
-import sys
 import sys, re, math, json
-import Payload, mescalineModuleLoad
-import FirstTab, StatusBar, appsTab
+import Payload, mescalineModuleLoad, FirstTab, StatusBar, appsTab, aboutTab
 import importlib.util
-
 from functools import partial
-
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QApplication, QPlainTextEdit, QTabWidget, QHBoxLayout, QVBoxLayout, QGroupBox, QGridLayout, QGroupBox, QSpacerItem, QSizePolicy
+from PyQt5.QtWidgets import QApplication, QPlainTextEdit, QTabWidget
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QGroupBox, QGridLayout, QGroupBox, QSpacerItem, QSizePolicy
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 
@@ -30,10 +27,12 @@ class Mescaline(QtWidgets.QMainWindow):
         except FileNotFoundError:
             print(f"Error: The file '{file_path}' does not exist.")
 
-        self.loadModules = mescalineModuleLoad.loadModules()
-
+            
+        ### Apps available for spawning ###
         self.module_directory = './APPS'
-        self.windows = []
+        self.loadModules = mescalineModuleLoad.loadModules()
+        self.classes_found = self.loadModules.testWithAST(self.module_directory)
+        print(f'Classes found in {self.module_directory}: {self.classes_found}')
 
         ### Window ### 
         self.move(QApplication.desktop().availableGeometry().bottomLeft())
@@ -70,14 +69,13 @@ class Mescaline(QtWidgets.QMainWindow):
             self.tabs.append(tab)
             self.tabWidget.addTab(tab,self.tab_data[t]['title'])
 
-        # Specify the directory containing the modules
-        self.classes_found = self.loadModules.testWithAST(self.module_directory)
-        print(f'Classes found in {self.module_directory}: {self.classes_found}')
-        # self.loadModules.load(self.module_directory, self.classes_found)
-
-        self.appsWidget = QtWidgets.QTabWidget()
+        # Create tab to view the apps
+        # self.appsWidget = QtWidgets.QTabWidget()
         self.appsTab = appsTab.appsTab(self)
         self.tabWidget.addTab(self.appsTab,"APPs")
+
+        self.aboutTab = aboutTab.aboutTab(self)
+        self.tabWidget.addTab(self.aboutTab,"About")
 
         # self.tabWidget.setCurrentIndex(p)
 
@@ -85,31 +83,19 @@ class Mescaline(QtWidgets.QMainWindow):
 
         self.setCentralWidget(self.tabWidget)
 
-    def open_new_window(self, flag):
-        if self.statusBar.winOpenButton.isChecked():
-            self.statusBar.winOpenButton.setStyleSheet("background-color: lightgreen; border: 1px solid green;")
-            # self.new_window = secondWindow.secondWindow()
-            self.new_window = drawThermo.Thermometer()
-            self.new_window.show()
-        else:
-            self.statusBar.winOpenButton.setStyleSheet("background-color: white; border: 1px solid green;")
-            # self.statusBar.winOpenButton.setChecked(False)
-            if hasattr(self, 'new_window'):
-                self.new_window.close()
-
     def send_data_to_new_window(self, d):
-        print(self.windows)
-        if len(self.windows) > 0:
-            for w in self.windows:
+        if len(self.loadModules.windowNames) > 0:
+            for n in self.loadModules.windowNames:
+                w = self.loadModules.windowPointers[n]
                 if hasattr(w, 'receive_data'):
                     w.receive_data(d)
 
+    # closes all the spawned windows
     def closeEvent(self, event):
-        # Override the closeEvent method to detect when the window is closed
-        print("Main window closing")
-        if len(self.windows) > 0:
-            for w in self.windows:
-                if hasattr(w, 'receive_data'):
+        if len(self.loadModules.windowNames) > 0:
+            for n in self.loadModules.windowNames:
+                w = self.loadModules.windowPointers[n]
+                if hasattr(w, 'close'):
                     w.close()
         event.accept()
 
