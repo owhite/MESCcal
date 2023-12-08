@@ -69,35 +69,18 @@ class createStatusBar(QtWidgets.QMainWindow):
         self.tmotText = QtWidgets.QLabel('TMOT:\n  ')
         self.ehzText = QtWidgets.QLabel('eHz:\n  ')
 
-        self.winOpenButton = QtWidgets.QPushButton('Win')
-        self.winOpenButton.clicked.connect(self.open_new_window)
-        self.winOpenButton.setCheckable(True)
-        self.winOpenButton.setStyleSheet("background-color: white; border: 1px solid green;")
+        # self.winOpenButton = QtWidgets.QPushButton('Win')
+        # self.winOpenButton.clicked.connect(self.open_new_window)
+        # self.winOpenButton.setCheckable(True)
+        # self.winOpenButton.setStyleSheet("background-color: white; border: 1px solid green;")
 
         h1.addWidget(self.vbusText)
         h1.addWidget(self.phaseAText)
         h1.addWidget(self.tmosText)
         h1.addWidget(self.tmotText)
         h1.addWidget(self.ehzText)
-        h1.addWidget(self.winOpenButton)
+        # h1.addWidget(self.winOpenButton)
         layout.addWidget(container1)
-
-        # self.button_open = QtWidgets.QPushButton('Open', self)
-        # self.button_open.clicked.connect(self.open_new_window)
-        
-        # self.button_send_data = QtWidgets.QPushButton('Send Data', self)
-        # self.button_send_data.clicked.connect(lambda: self.send_data_to_new_window("Hello from Main Window"))
-        # h1.addWidget(self.button_send_data)
-
-        # container2 = QtWidgets.QWidget()
-        # h2 = QtWidgets.QHBoxLayout(container2)
-
-        # h2.addWidget(self.vbusText)
-        # h2.addWidget(self.phaseAText)
-        # h2.addWidget(self.tmosText)
-        # h2.addWidget(self.tmotText)
-        # h2.addWidget(self.ehzText)
-        # layout.addWidget(container2)
 
         self.status_bar.addWidget(self.layout_widget)
         self.statusBar().addPermanentWidget( self.statusText )

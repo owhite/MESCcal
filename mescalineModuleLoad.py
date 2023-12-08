@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import ast, os, re
 import importlib.util
 
@@ -18,13 +16,10 @@ class loadModules:
             for py_file in classes:
                 module_name = os.path.splitext(py_file)[0]
                 full_module_name = f'{module_name}'  # Adjust the package name
-                print (full_module_name)
-                print (directory + '/' + py_file)
                 spec = importlib.util.spec_from_file_location("loaded_module", directory + '/' + py_file)
                 loaded_module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(loaded_module)
 
-                print("Module loaded successfully.")
                 # Check if the module has the desired class
                 if hasattr(loaded_module, full_module_name):
                     # Instantiate the secondWindow class and show it
@@ -32,7 +27,6 @@ class loadModules:
                     self.window_instance = module_class()
                     self.window_instance.show()
                     l.append(self.window_instance)
-                    print("Window shown.")
                 else:
                     print("Module does not have a class named 'secondWindow.'")
 

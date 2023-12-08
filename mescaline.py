@@ -3,7 +3,7 @@
 import sys
 import sys, re, math, json
 import Payload, mescalineModuleLoad
-import FirstTab, StatusBar
+import FirstTab, StatusBar, appsTab
 import importlib.util
 
 from functools import partial
@@ -70,9 +70,13 @@ class Mescaline(QtWidgets.QMainWindow):
             self.tabWidget.addTab(tab,self.tab_data[t]['title'])
 
         # Specify the directory containing the modules
-        classes_found = self.loadModules.testWithAST(self.module_directory)
-        print(f'Classes found in {self.module_directory}: {classes_found}')
-        self.windows = self.loadModules.load(self.module_directory, classes_found)
+        self.classes_found = self.loadModules.testWithAST(self.module_directory)
+        print(f'Classes found in {self.module_directory}: {self.classes_found}')
+        self.windows = self.loadModules.load(self.module_directory, self.classes_found)
+
+        self.appsWidget = QtWidgets.QTabWidget()
+        self.appsTab = appsTab.appsTab(self)
+        self.tabWidget.addTab(self.appsTab,"APPs")
 
         # self.tabWidget.setCurrentIndex(p)
 
