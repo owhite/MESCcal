@@ -1,6 +1,6 @@
 import re
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QPlainTextEdit, QTabWidget, QVBoxLayout, QGridLayout, QGroupBox, QRadioButton
+from PyQt5.QtWidgets import QPlainTextEdit, QTabWidget, QVBoxLayout, QGridLayout, QGroupBox, QRadioButton, QSpacerItem
 from PyQt5.QtCore import Qt
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 
@@ -208,19 +208,22 @@ class SerialSendView(QtWidgets.QWidget):
         self.sendData = QtWidgets.QTextEdit(self)
         self.sendData.setAcceptRichText(False)
         self.sendData.setMaximumHeight(32)
+        self.sendData.setMaximumWidth(200)
         self.sendData.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
 
         self.sendButton = QtWidgets.QPushButton('Send')
         self.sendButton.clicked.connect(self.sendButtonClicked)
         self.sendButton.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Preferred)
-        self.sendButton.enterEvent = lambda event: parent.customButtonHoverEnter(event, 'Enter string and send cmd to serial')
+        s = 'Enter string and send cmd to serial'
+        self.sendButton.enterEvent = lambda event: parent.customButtonHoverEnter(event, s)
         self.sendButton.leaveEvent = parent.customButtonHoverLeave
         
+        spacer = QtWidgets.QSpacerItem(400, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+
         self.setLayout( QtWidgets.QHBoxLayout(self) )
+        self.layout().addSpacerItem(spacer)
         self.layout().addWidget(self.sendData)
         self.layout().addWidget(self.sendButton)
-        self.layout().setContentsMargins(3, 3, 3, 3)
-
 
     def sendButtonClicked(self):
         self.serialSendSignal.emit( self.sendData.toPlainText() )
