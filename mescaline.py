@@ -3,6 +3,10 @@
 import sys, re, math, json
 import Payload, mescalineModuleLoad, FirstTab, StatusBar, appsTab, aboutTab
 import importlib.util
+
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import matplotlib.pyplot as plt
+
 from functools import partial
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QApplication, QPlainTextEdit, QTabWidget
