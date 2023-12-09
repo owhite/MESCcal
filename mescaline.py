@@ -31,7 +31,6 @@ class Mescaline(QtWidgets.QMainWindow):
         self.module_directory = self.interface["module_directory"]
 
         ### Window ### 
-        self.move(QApplication.desktop().availableGeometry().bottomLeft())
         self.setMinimumWidth(800)
         self.setMinimumHeight(300)
 
