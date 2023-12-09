@@ -14,25 +14,21 @@ class Mescaline(QtWidgets.QMainWindow):
     def __init__(self):
         super(Mescaline, self).__init__()
 
-        ### Get a config file ### 
-        file_path = "tab_contents.json"
+        ### Config file controls tab variables ### 
+        file_path = "app_specs.json"
         try:
             with open(file_path, 'r') as json_file:
                 try:
-                    self.tab_data = json.load(json_file)
-
+                    t = json.load(json_file)
+                    self.tab_data = t['tab_data']
+                    self.interface = t['interface']
                 except json.JSONDecodeError as json_error:
                     print(f"Error decoding JSON: {json_error}")
-
         except FileNotFoundError:
             print(f"Error: The file '{file_path}' does not exist.")
-
             
-        ### Apps available for spawning ###
-        self.module_directory = './APPS'
-        self.loadModules = mescalineModuleLoad.loadModules()
-        self.classes_found = self.loadModules.testWithAST(self.module_directory)
-        print(f'Classes found in {self.module_directory}: {self.classes_found}')
+        self.port_substring = self.interface["port_substring"]
+        self.module_directory = self.interface["module_directory"]
 
         ### Window ### 
         self.move(QApplication.desktop().availableGeometry().bottomLeft())
@@ -41,13 +37,11 @@ class Mescaline(QtWidgets.QMainWindow):
 
         ### Serial stuff ###
         self.port = QSerialPort()
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.checkSerialStatus) # monitors if json is coming in
+        self.timer = QTimer(self) # timers are so helpful
+        self.timer.timeout.connect(self.checkSerialStatus)
         self.timer.start(50)
         self.serialStreamingOn = False
         self.serialWasOn = False
-        self.serialButtonInc = 9
-        self.serialButtonColor = ''
         self.serialPayload = Payload.Payload()
         self.serialPayload.startTimer()
 
@@ -55,42 +49,50 @@ class Mescaline(QtWidgets.QMainWindow):
         self.statusBar = StatusBar.createStatusBar(self)
         self.prevStatusText = ''
 
-        ### Tabs ###
+        ### First tab opens serial ###
         self.tabWidget = QtWidgets.QTabWidget()
         self.tab_first = FirstTab.FirstTab(self)
-        self.tabWidget.addTab(self.tab_first,"PORT")
+        self.tabWidget.addTab(self.tab_first,'Port')
 
-        self.tabs = []
-        count = 0
-        for t in self.tab_data.keys():
-            self.tab_dict = self.tab_data[t]
-            self.boxes = self.tab_data[t]['boxes']
-            tab = createTab(self)
-            self.tabs.append(tab)
-            self.tabWidget.addTab(tab,self.tab_data[t]['title'])
+        ### Next tabs are specified in input json ###
+        self.tabs = self.makeTabs(self.tab_data)
 
-        # Create tab to view the apps
-        # self.appsWidget = QtWidgets.QTabWidget()
+        ### Get a list of apps available for spawning ###
+        self.module_directory = './APPS'
+        self.loadModules = mescalineModuleLoad.loadModules(self)
+        self.classes_found = self.loadModules.testWithAST(self.module_directory)
+
+        ### Tab to view the apps ###
         self.appsTab = appsTab.appsTab(self)
-        self.tabWidget.addTab(self.appsTab,"APPs")
+        self.tabWidget.addTab(self.appsTab,"Apps")
 
+        ### Acknowledgements and user information ###
         self.aboutTab = aboutTab.aboutTab(self)
         self.tabWidget.addTab(self.aboutTab,"About")
 
-        # self.tabWidget.setCurrentIndex(p)
-
-        self.setWindowTitle("Mescaline")
-
+        self.setWindowTitle("mescaline")
         self.setCentralWidget(self.tabWidget)
 
-    def send_data_to_new_window(self, d):
+    def sendDataToApps(self, d):
         if len(self.loadModules.windowNames) > 0:
             for n in self.loadModules.windowNames:
                 w = self.loadModules.windowPointers[n]
                 if hasattr(w, 'receive_data'):
                     w.receive_data(d)
 
-    # closes all the spawned windows
+    ### Render tabs described in json config file ###
+    def makeTabs(self, json_specs):
+        tabs = []
+        count = 0
+        for t in json_specs.keys():
+            self.tab_dict = json_specs[t]
+            self.boxes = json_specs[t]['boxes']
+            tab = createTab(self)
+            tabs.append(tab)
+            self.tabWidget.addTab(tab,json_specs[t]['title'])
+        return(tabs)
+
+    # closes all the spawned apps/windows
     def closeEvent(self, event):
         if len(self.loadModules.windowNames) > 0:
             for n in self.loadModules.windowNames:
@@ -99,18 +101,20 @@ class Mescaline(QtWidgets.QMainWindow):
                     w.close()
         event.accept()
 
+    # things to do when a new serial-json string comes in
     def updateJsonData(self, str):
         str = str.rstrip('\n')
         d = {}
         for row in str.split('\n'):
             try:
                 self.streamDict = json.loads(row)
-                self.updateStatusJson(self.streamDict)
-                self.send_data_to_new_window(self.streamDict)
+                self.updateStatusJson(self.streamDict) 
+                self.sendDataToApps(self.streamDict)
             except json.JSONDecodeError as e:
                 print("Getting bad json: {0}".format(row))
 
 
+    # send the serial-json values to the status bar
     def updateStatusJson(self, streamDict):
         f = round(streamDict['vbus'], 1)
         self.statusBar.vbusText.setText('Vbus:\n{0}'.format(f))
@@ -118,12 +122,11 @@ class Mescaline(QtWidgets.QMainWindow):
         f = math.sqrt((streamDict['iq'] * streamDict['iq']) + (streamDict['id'] * streamDict['id']))
         f = round(f, 1)
         self.statusBar.phaseAText.setText('PhaseA:\n{0}'.format(f))
-
         self.statusBar.ehzText.setText('eHz:\n{0}'.format(round(streamDict['ehz'], 1)))
         self.statusBar.tmosText.setText('TMOS:\n{0}'.format(round(streamDict['TMOS'], 1)))
         self.statusBar.tmotText.setText('TMOT:\n{0}'.format(round(streamDict['TMOT'], 1)))
 
-    # most of the tabs have values loaded from the mesc payload
+    # a lot of the tabs have values loaded from the mesc payload
     #  this handles updating those values
     def updateTabs(self):
         if len(self.serialPayload.reportString()) > 0:
@@ -137,6 +140,7 @@ class Mescaline(QtWidgets.QMainWindow):
         self.serialPayload.resetString()
 
     # a timer that checks if anything has recently been transmitted
+    #  and changes colors of the buttons
     def checkSerialStatus(self):
         if not self.port.isDataTerminalReady(): # seems to indicate the port is dead
             self.statusBar.getButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
@@ -144,16 +148,20 @@ class Mescaline(QtWidgets.QMainWindow):
             if self.serialWasOn:
                 self.statusBar.statusText.setText('Port died')
         else:
-            html_color = self.statusBar.buttonColorGenerator(frequency=.4, amplitude=0.5, phase_shift=0, hue = 0.33) # Green hue = 0.33
+            # Green hue = 0.33
+            html_color = self.statusBar.buttonColorGenerator(frequency=.4, amplitude=0.5, phase_shift=0, hue = 0.33) 
             self.statusBar.getButton.setStyleSheet(f'background-color: {html_color}; border: 1px solid green;')
             self.statusBar.saveButton.setStyleSheet("background-color : #009900;" "border :1px solid green;") 
             self.serialWasOn = True
 
-        if (self.serialPayload.reportTimer()) > 0.2: # checks if json is coming in
+        # This gets reset when serial data has came in
+        if (self.serialPayload.reportTimer()) > 0.2: 
             self.statusBar.serialButtonOff()
         else:
             self.statusBar.serialButtonOn()
                 
+### Creates a tab that is described in json config file
+### 
 class createTab(QtWidgets.QMainWindow): 
     def __init__(self, parent):
         super().__init__(parent)
@@ -223,7 +231,7 @@ class createTab(QtWidgets.QMainWindow):
                 if isinstance(r, QtWidgets.QComboBox):
                     r.setCurrentIndex(1 + int(struct[n]['value']))
 
-    def is_int_or_float(self, s):
+    def isIntOrFloat(self, s):
         try:
             int_value = int(s)
             return True
@@ -235,7 +243,6 @@ class createTab(QtWidgets.QMainWindow):
                 return False
 
     def dataEntryButtonClicked(self, name, entryItem):
-
         if isinstance(entryItem, QtWidgets.QLineEdit):
             n = entryItem.text()
         if isinstance(entryItem, QtWidgets.QComboBox):
@@ -247,13 +254,11 @@ class createTab(QtWidgets.QMainWindow):
         if not self.port.isOpen():
             self.statusText.setText('Port closed: cant update')
         else:
-            if self.is_int_or_float(n):
+            if self.isIntOrFloat(n):
                 text = 'set {0} {1}'.format(name, n)
                 self.statusText.setText(text)
                 text = text + '\r\n'
                 self.port.write( text.encode() )
-                # self.parent.serialPayload.resetString() # 
-
             else:
                 self.statusText.setText('{0} not number'.format(n))
 

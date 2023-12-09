@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys
 import numpy as np
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
@@ -7,19 +5,23 @@ from PyQt5.QtCore import QTimer
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
 
-class realTimePlot(QMainWindow):
+class MescalineSafe:
+    # ha ha
+    pass
+
+class realTimePlot(QWidget):
     def __init__(self):
         super().__init__()
+        self.initUI()
 
+    def initUI(self):
         self.setWindowTitle('Baby Plotting Example')
+
+        self.layout = QVBoxLayout()
 
         # Create Matplotlib figure and axis
         self.figure, self.axes = plt.subplots(2, 1, sharex=True)
         self.canvas = FigureCanvas(self.figure)
-
-        # Create a timer for updating the plot
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(lambda: self.receive_data(1))
 
         # Initialize data
         self.x_data = np.arange(0, 10, 0.1)
@@ -33,27 +35,17 @@ class realTimePlot(QMainWindow):
         self.axes[0].set_title('Vbat')
         self.axes[1].set_title('TMOT')
 
-        # Set up the layout
-        layout = QVBoxLayout()
-        layout.addWidget(self.canvas)
+        self.layout.addWidget(self.canvas)
 
-        central_widget = QWidget()
-        central_widget.setLayout(layout)
-        self.setCentralWidget(central_widget)
-
-        # Start the timer to update the plot every 100 milliseconds
-        self.timer.start(100)
+        self.setLayout(self.layout)
 
     def receive_data(self, d):
-        p_y1 = np.random.random()
-        p_y2 = np.random.random()
+        p_y1 = float(d['vbus'])
+        p_y2 = float(d['TMOS']) - 273.15
+        # print("plot: {0} :: {1}".format(p_y1, p_y2))
         self.update_plot(p_y1, p_y2)
 
     def update_plot(self, y1, y2):
-        # Generate new data points
-        y1 = np.random.random()
-        y2 = np.random.random()
-
         # Shift existing data to the left
         self.y1_data = np.roll(self.y1_data, -1)
         self.y2_data = np.roll(self.y2_data, -1)

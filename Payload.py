@@ -1,6 +1,11 @@
-# Payload.py
-
 import time
+
+### Handles string management coming in from the serial
+###   performs string operations and manages the serial
+###   timer stuff
+### 
+### This code will be part of where everything will go wrong
+###   when the MESC terminal changes the format of its data
 
 class PayloadError(Exception):
     """A custom exception used to report errors in use of Timer class"""

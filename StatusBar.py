@@ -10,6 +10,12 @@ from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 from PyQt5.QtGui import QPainter, QPainterPath
 
+### Tab that handles displaying status of the serial,
+###    screens to show output of serial
+###    status information like vbus, and
+###    has some buttons to perform things.
+###    This gets called by main program.
+### 
 class createStatusBar(QtWidgets.QMainWindow): 
     def __init__(self, parent):
         super().__init__(parent)

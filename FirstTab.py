@@ -4,8 +4,8 @@ from PyQt5.QtWidgets import QPlainTextEdit, QTabWidget, QVBoxLayout, QGridLayout
 from PyQt5.QtCore import Qt
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 
-# Port connection tab -- handles serial connection and sending commands
-
+### Port connection tab -- handles serial connection and sending commands
+###
 class FirstTab(QtWidgets.QMainWindow): 
 
     def __init__(self, parent):
@@ -18,6 +18,7 @@ class FirstTab(QtWidgets.QMainWindow):
         self.tButton = parent.statusBar.getButton
         self.serialStreamingOn = parent.serialStreamingOn
         self.serialPayload = parent.serialPayload
+        self.port_substring = parent.port_substring
         self.max_chars = 3000
         self.customButtonHoverEnter = parent.statusBar.customButtonHoverEnter
         self.customButtonHoverLeave = parent.statusBar.customButtonHoverLeave
@@ -25,9 +26,6 @@ class FirstTab(QtWidgets.QMainWindow):
         self.initUI()
 
     def initUI(self):
-        # This allows you to see all the json streaming which is fine for debugging
-        #   but not really needed for operation
-
         self.jsonData = QtWidgets.QTextEdit(self) # making this one in the parent
         self.jsonDataView   = jsonDataView(self)
         self.serialDataView = SerialDataView(self) # these make their own QTextEdit boxes
@@ -55,8 +53,8 @@ class FirstTab(QtWidgets.QMainWindow):
         self.serialSendView.serialSendSignal.connect(self.sendFromPort)
         self.port.readyRead.connect(self.readFromPort)
 
+    # Toggle the visibility of the QTextEdit based on the radio button state
     def toggle_text_edit(self, checked):
-        # Toggle the visibility of the QTextEdit based on the radio button state
         self.jsonData.setVisible(checked)
 
     def portOpen(self, flag):
@@ -90,7 +88,7 @@ class FirstTab(QtWidgets.QMainWindow):
         count = 0
         for port in [ port.portName() for port in QSerialPortInfo().availablePorts() ]:
             l.append(port)
-            if 'cu.usbmodem' in port:
+            if self.port_substring in port:
                 l[count] = l[0]
                 l[0] = port
             count = count + 1

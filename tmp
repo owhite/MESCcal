@@ -1,0 +1,69 @@
+import sys
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import QUrl, Qt
+
+class Example(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.initUI()
+
+    def initUI(self):
+        ### Tool Bar ###
+        self.toolBar = self.addToolBar('APPS')
+        self.addToolBar(self.toolBar)
+
+        self.setCentralWidget(QtWidgets.QWidget(self))
+        layout = QtWidgets.QVBoxLayout(self.centralWidget())
+
+        # Create a QFrame to contain the QTextBrowser
+        frame = QtWidgets.QFrame()
+
+        # Create a QHBoxLayout to center the QFrame horizontally
+        frame_layout = QtWidgets.QHBoxLayout(frame)
+        frame_layout.setAlignment(Qt.AlignHCenter)
+
+        # Create a QTextBrowser with a clickable link
+        text = """
+        <div style="text-align: left;">
+            This is an example of a hotlink. Click <a href="http://www.google.com">here</a> to open the website in your browser.
+            This is another line in the text.
+            This is a new line with a line break.<br>
+            And another line after the line break.
+        </div>
+        """
+
+        self.text_browser = QtWidgets.QTextBrowser()
+        self.text_browser.setOpenExternalLinks(True)
+        self.text_browser.setHtml(text)
+        self.text_browser.anchorClicked.connect(self.open_link)
+
+        frame_layout.addWidget(self.text_browser)
+
+        # Apply box-shadow to the QFrame
+        frame.setStyleSheet('QFrame {'
+                            '   border-radius: 10px;'
+                            '   background-color: #ffffff;'
+                            '   border: 4px solid #ccc;'
+                            '}')
+
+        # Set the size of the QFrame
+        frame.setFixedSize(300, 200)
+
+        layout.addWidget(frame)
+
+        self.setWindowTitle('Text with Shadow Box')
+        self.setGeometry(100, 100, 800, 600)  # Set the main window geometry
+        self.show()
+
+    def open_link(self, link):
+        # Open the link in the default web browser
+        QUrl(link.toString()).openInDefaultBrowser()
+
+def main():
+    app = QtWidgets.QApplication(sys.argv)
+    ex = Example()
+    sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()
