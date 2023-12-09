@@ -45,7 +45,7 @@ class createStatusBar(QtWidgets.QMainWindow):
         self.getButton.clicked.connect(self.getSerialData)
         self.getButton.enterEvent = lambda event: self.customButtonHoverEnter(event, "Get: retreive values from MESC, load into tabs")
         self.getButton.leaveEvent = self.customButtonHoverLeave
-        QTimer.singleShot(100, lambda: self.getButton.enterEvent(None)) # does a little refresh that helps
+        # QTimer.singleShot(100, lambda: self.getButton.enterEvent(None)) # does a little refresh that helps
 
         self.saveButton = CapsuleButton("Set")
         self.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid black;") 
@@ -55,10 +55,10 @@ class createStatusBar(QtWidgets.QMainWindow):
 
         self.streamButton = CapsuleButton("Data")
         self.streamButton.setStyleSheet("background-color : white;" "border :1px solid black;") 
+        self.streamButton.clicked.connect(self.getSerialStream)
         self.streamButton.enterEvent = lambda event: self.customButtonHoverEnter(event, "Data: toggles data streaming from MESC")
         self.streamButton.leaveEvent = self.customButtonHoverLeave
         self.streamButton.setCheckable(True)
-        self.streamButton.clicked.connect(self.getSerialStream)
 
         self.statusText = QtWidgets.QLabel(self)
         self.statusText.setText('Status msgs here')

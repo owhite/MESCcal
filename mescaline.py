@@ -141,17 +141,17 @@ class Mescaline(QtWidgets.QMainWindow):
     # a timer that checks if anything has recently been transmitted
     #  and changes colors of the buttons
     def checkSerialStatus(self):
-        if not self.port.isDataTerminalReady(): # seems to indicate the port is dead
-            self.statusBar.getButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
-            self.statusBar.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
-            if self.serialWasOn:
-                self.statusBar.statusText.setText('Port died')
-        else:
+        if self.port.isOpen(): 
             # Green hue = 0.33
             html_color = self.statusBar.buttonColorGenerator(frequency=.4, amplitude=0.5, phase_shift=0, hue = 0.33) 
             self.statusBar.getButton.setStyleSheet(f'background-color: {html_color}; border: 1px solid green;')
             self.statusBar.saveButton.setStyleSheet("background-color : #009900;" "border :1px solid green;") 
             self.serialWasOn = True
+        else:
+            self.statusBar.getButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
+            self.statusBar.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
+            if self.serialWasOn:
+                self.statusBar.statusText.setText('Port died')
 
         # This gets reset when serial data has came in
         if (self.serialPayload.reportTimer()) > 0.2: 
