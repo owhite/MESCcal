@@ -7,13 +7,13 @@
 		    "name": "params",
 		    "buttons": [
 			[
-			    {"name": "pwm_freq", "type": "singleText", "desc": "PWM frequency"},
-			    {"name": "direction", "type": "singleText", "desc": "Motor direction"},
-			    {"name": "fw_curr", "type": "singleText", "desc": "Max field weakenning current"}
+			    {"name": "pwm_freq", "type": "singleText", "desc": "PWM frequency", "round": "1"},
+			    {"name": "direction", "type": "singleText", "desc": "Motor direction", "round": "0"},
+			    {"name": "fw_curr", "type": "singleText", "desc": "Max field weakenning current", "round": "1"}
 			],		    
 			[
-			    {"name": "motor_pp", "type": "singleText", "desc": "Motor pole pairs"},
-			    {"name": "pole_pairs","type": "singleText", "desc": "Motor pole pairs"}
+			    {"name": "motor_pp", "type": "singleText", "desc": "Motor pole pairs", "round": "0"},
+			    {"name": "pole_pairs","type": "singleText", "desc": "Motor pole pairs", "round": "0"}
 			]
 		    ]
 		},
@@ -21,16 +21,16 @@
 		    "name": "max values",
 		    "buttons": [
 			[
-			    {"name": "curr_max", "type": "singleText", "desc": "Max motor current"},
-			    {"name": "curr_min", "type": "singleText", "desc": "Min motor current"}
+			    {"name": "curr_max", "type": "singleText", "desc": "Max motor current", "round": "1"},
+			    {"name": "curr_min", "type": "singleText", "desc": "Min motor current", "round": "1"}
 			],
 			[
-			    {"name": "i_max", "type": "singleText", "desc": "Max current"},
-			    {"name": "rpm_max", "type": "singleText", "desc": "Max RPM"}
+			    {"name": "i_max", "type": "singleText", "desc": "Max current", "round": "1"},
+			    {"name": "rpm_max", "type": "singleText", "desc": "Max RPM", "round": "1"}
 			],
 			[
-			    {"name": "p_max", "type": "singleText", "desc": "Max power"},
-			    {"name": "v_max", "type": "singleText", "desc": "Max voltage"}
+			    {"name": "p_max", "type": "singleText", "desc": "Max power", "round": "1"},
+			    {"name": "v_max", "type": "singleText", "desc": "Max voltage", "round": "1"}
 			]
 		    ]
 		},
@@ -47,11 +47,11 @@
 		    "buttons": [
 			[
 			    {"name": "hfi_type", "type": "comboBox", "desc": "HFI type [0=None, 1=45deg, 2=d axis]", "list": ["None", "45deg", "d_axis"]},
-			    {"name": "park_curr", "type": "singleText", "desc": "max current for handbrake"}
+			    {"name": "park_curr", "type": "singleText", "desc": "max current for handbrake", "round": "1"}
 			],
 			[
-			    {"name": "safe_count", "type": "singleText", "desc": "Live count before allowing throttle"},
-			    {"name": "safe_start", "type": "singleText", "desc": "Countdown before allowing throttle"}
+			    {"name": "safe_count", "type": "singleText", "desc": "Live count before allowing throttle", "round": "1"},
+			    {"name": "safe_start", "type": "singleText", "desc": "Countdown before allowing throttle", "round": "1"}
 			]
 		    ]
 		}
@@ -68,9 +68,9 @@
 			    
 			],		    
 			[
-			    {"name": "ol_step", "type": "singleText", "desc": "Angle per PWM period openloop"},
-			    {"name": "uart_dreq", "type": "singleText", "desc": "Uart input"},
-			    {"name": "uart_req", "type": "singleText", "desc": "Uart input"}
+			    {"name": "ol_step", "type": "singleText", "desc": "Angle per PWM period openloop", "round": "1"},
+			    {"name": "uart_dreq", "type": "singleText", "desc": "Uart input", "round": "1"},
+			    {"name": "uart_req", "type": "singleText", "desc": "Uart input", "round": "1"}
 			]
 		    ]
 		},
@@ -96,12 +96,12 @@
 		    "name": "adc1",
 		    "buttons": [
 			[
-			    {"name": "adc1", "type": "singleText", "desc": "Raw ADC throttle"},
+			    {"name": "adc1", "type": "singleText", "desc": "Raw ADC throttle", "round": "1"},
 			    {"name": "adc1_pol", "type": "singleText", "desc": "ADC1 polarity"}
 			],
 			[
-			    {"name": "adc1_max", "type": "singleText", "desc": "ADC1 max val"},
-			    {"name": "adc1_min", "type": "singleText", "desc": "ADC1 min val"} 
+			    {"name": "adc1_max", "type": "singleText", "desc": "ADC1 max val", "round": "0"},
+			    {"name": "adc1_min", "type": "singleText", "desc": "ADC1 min val", "round": "0"} 
 			]
 		    ]
 		},
@@ -109,7 +109,7 @@
 		    "name": "adc2",
 		    "buttons": [
 			[
-			    {"name": "adc2_pol", "type": "singleText", "desc": "ADC2 polarity"}
+			    {"name": "adc2_pol", "type": "singleText", "desc": "ADC2 polarity", "round": "1"}
 			],
 			[
 			    {"name": "adc2_max", "type": "singleText", "desc": "ADC2 max val"},
@@ -126,18 +126,22 @@
 		    "name": "motor params",
 		    "buttons": [
 			[
-			    {"name": "r_phase", "type": "singleText", "desc": "Phase resistance" },
+			    {"name": "r_phase", "type": "singleText", "desc": "Phase resistance"},
 			    {"name": "lq_phase", "type": "singleText", "desc": "Phase inductance"},
 			    {"name": "ld_phase", "type": "singleText", "desc": "Phase inductance"}
 			],
 			[
-			    {"name": "motor_pp", "type": "singleText", "desc": "Motor pole pairs"},
-			    {"name": "pole_pairs","type": "singleText", "desc": "Motor pole pairs"}
+			    {"name": "motor_pp", "type": "singleText", "desc": "Motor pole pairs", "round": "0"},
+			    {"name": "pole_pairs","type": "singleText", "desc": "Motor pole pairs", "round": "0"}
 			]
 		    ]
 		}
 	    ]
 	}
     },
-    "interface": {"port_substring": "cu.usbmodem", "module_directory": "./APPS" }
+    "interface":
+    {
+	"port_substring": "cu.usbmodem",
+	"module_directory": "./APPS"
+    }
 }

@@ -25,8 +25,9 @@ class drawThermo(QWidget):
         self.setLayout(vbox)
 
     def receive_data(self, d):
-        self.value = float(d['TMOS']) - 273.15
-        self.repaint()
+        if d.get('TMOS'):
+            self.value = float(d['TMOS']) - 273.15
+            self.repaint()
 
     def changeVal(self):
         print("slider bar inactive") 
