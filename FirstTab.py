@@ -202,6 +202,7 @@ class SerialDataView(QtWidgets.QWidget):
 class SerialSendView(QtWidgets.QWidget):
 
     serialSendSignal = QtCore.pyqtSignal(str)
+
     def __init__(self, parent):
         super(SerialSendView, self).__init__(parent)
 

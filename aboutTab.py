@@ -38,7 +38,7 @@ class aboutTab(QtWidgets.QMainWindow):
         <H3>Troubleshooting</H3>
         <br>
         <b>Serial connection.</b>The PYQT5 environment that does serial handling is very stable. If you're having 
-        trouble connecting it probably does not have to do with the interface. If you can't connect to the serial try:
+        trouble connecting it probably does not have to do with the interface. If you can't connect to the serial, try:
         <ul style="list-style-type: disc;">
         <li>Connecting the MESC board to your computer and THEN powering up the MESC board
         <li>Checking to see if your computer sees a new port 

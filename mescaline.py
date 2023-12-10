@@ -61,7 +61,6 @@ class Mescaline(QtWidgets.QMainWindow):
         self.tabs = self.makeTabs(self.tab_data)
 
         ### Get a list of apps available for spawning ###
-        self.module_directory = './APPS'
         self.loadModules = mescalineModuleLoad.loadModules(self)
         self.classes_found = self.loadModules.testWithAST(self.module_directory)
 
@@ -111,7 +110,13 @@ class Mescaline(QtWidgets.QMainWindow):
         for row in str.split('\n'):
             try:
                 self.streamDict = json.loads(row)
-                self.updateStatusJson(self.streamDict) 
+                # there's different types of json that come down the pipe
+                if self.streamDict.get('time'):
+                    # print("LOG: {0}".format(self.streamDict))
+                    pass
+                if self.streamDict.get('vbus'):
+                    # print("STATUS: {0}".format(self.streamDict))
+                    self.updateStatusJson(self.streamDict) 
                 self.sendDataToApps(self.streamDict)
             except json.JSONDecodeError as e:
                 print("Getting bad json: {0}".format(row))
@@ -119,15 +124,21 @@ class Mescaline(QtWidgets.QMainWindow):
 
     # send the serial-json values to the status bar
     def updateStatusJson(self, streamDict):
-        f = round(streamDict['vbus'], 1)
-        self.statusBar.vbusText.setText('Vbus:\n{0}'.format(f))
+        if streamDict.get('vbus'):
+            f = round(streamDict['vbus'], 1)
+            self.statusBar.vbusText.setText('Vbus:\n{0}'.format(f))
 
-        f = math.sqrt((streamDict['iq'] * streamDict['iq']) + (streamDict['id'] * streamDict['id']))
-        f = round(f, 1)
-        self.statusBar.phaseAText.setText('PhaseA:\n{0}'.format(f))
-        self.statusBar.ehzText.setText('eHz:\n{0}'.format(round(streamDict['ehz'], 1)))
-        self.statusBar.tmosText.setText('TMOS:\n{0}'.format(round(streamDict['TMOS'], 1)))
-        self.statusBar.tmotText.setText('TMOT:\n{0}'.format(round(streamDict['TMOT'], 1)))
+        if streamDict.get('iq') and streamDict.get('id'):
+            f = math.sqrt((streamDict['iq'] * streamDict['iq']) + (streamDict['id'] * streamDict['id']))
+            f = round(f, 1)
+            self.statusBar.phaseAText.setText('PhaseA:\n{0}'.format(f))
+
+        if streamDict.get('ehz'):
+            self.statusBar.ehzText.setText('eHz:\n{0}'.format(round(streamDict['ehz'], 1)))
+        if streamDict.get('TMOS'):
+            self.statusBar.tmosText.setText('TMOS:\n{0}'.format(round(streamDict['TMOS'], 1)))
+        if streamDict.get('TMOT'):
+            self.statusBar.tmotText.setText('TMOT:\n{0}'.format(round(streamDict['TMOT'], 1)))
 
     # a lot of the tabs have values loaded from the mesc payload
     #  this handles updating those values
@@ -187,6 +198,23 @@ class createTab(QtWidgets.QMainWindow):
             button_rows = box['buttons']
             tab_layout.addWidget(self.createBox(box['name'], button_rows))
 
+    def updateValues(self, struct):
+        for n in struct['names']:
+            r = self.entryItem.get(n)
+            if r is not None:
+                if isinstance(r['entry_item'], QtWidgets.QLineEdit):
+                    value = struct[n]['value']
+                    if r.get('round'):
+                        value = float(value)
+                        rnd = int(r.get('round'))
+                        value = round(value, rnd)
+                        if rnd == 0:
+                            value = int(value)
+                        value = str(value)
+                    r['entry_item'].setText(value)
+                if isinstance(r['entry_item'], QtWidgets.QComboBox):
+                    r['entry_item'].setCurrentIndex(1 + int(struct[n]['value']))
+
     def createBox(self, box_name, button_rows):
         group_box = QtWidgets.QGroupBox(box_name)
         group_box_layout = QtWidgets.QVBoxLayout()
@@ -203,7 +231,6 @@ class createTab(QtWidgets.QMainWindow):
         row_layout.setSpacing(0)
 
         for buttons in row:
-
             if "comboBox" in buttons['type']:
                 entry_item = QtWidgets.QComboBox()
                 entry_item.addItem('none')
@@ -213,7 +240,10 @@ class createTab(QtWidgets.QMainWindow):
                 entry_item = QtWidgets.QLineEdit()
                 
             pb = QtWidgets.QPushButton(buttons['name'])
-            self.entryItem[buttons['name']] = entry_item
+            self.entryItem[buttons['name']] = {}
+            self.entryItem[buttons['name']]['entry_item'] = entry_item
+            if buttons.get('round'):
+                self.entryItem[buttons['name']]['round'] = buttons.get('round')
             entry_item.setFixedWidth(100)
             pb.setFixedWidth(120)
             pb.setToolTip(buttons['desc'])
@@ -224,15 +254,6 @@ class createTab(QtWidgets.QMainWindow):
 
         row_layout.setAlignment(QtCore.Qt.AlignLeft)
         return(row_layout)
-
-    def updateValues(self, struct):
-        for n in struct['names']:
-            r = self.entryItem.get(n)
-            if r is not None:
-                if isinstance(r, QtWidgets.QLineEdit):
-                    self.entryItem[n].setText(struct[n]['value'])
-                if isinstance(r, QtWidgets.QComboBox):
-                    r.setCurrentIndex(1 + int(struct[n]['value']))
 
     def isIntOrFloat(self, s):
         try:

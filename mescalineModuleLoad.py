@@ -17,6 +17,7 @@ from PyQt5.QtCore import Qt, QTimer
 class loadModules(QtWidgets.QMainWindow):
     def __init__(self, parent):
         super().__init__(parent)
+        self.port = parent.port
         self.classNames = [] # contains all known classes
         self.windowPointers = {} # contains only the windows that are loaded
         self.windowNames = [] # contains names of the windows that are loaded
@@ -49,7 +50,13 @@ class loadModules(QtWidgets.QMainWindow):
                     # Instantiate the window class and show it
                     module_class = getattr(loaded_module, full_module_name)
                     self.window_instance = module_class()
-                    self.window_instance.show()
+
+                    if hasattr(self.window_instance, 'show'):
+                        self.window_instance.show()
+
+                    if hasattr(self.window_instance, 'set_port'):
+                        self.window_instance.set_port(self.port)
+
                     if full_module_name not in self.windowNames:
                         self.windowNames.append(full_module_name)
                         self.windowPointers[full_module_name] = self.window_instance
