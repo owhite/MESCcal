@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys, re, math, json
-import Payload, mescalineModuleLoad, FirstTab, StatusBar, appsTab, aboutTab
+import Payload, mescalineModuleLoad, FirstTab, StatusBar, appsTab, aboutTab, ColorSegmentRing
 import importlib.util
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 from functools import partial
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QApplication, QPlainTextEdit, QTabWidget
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QGroupBox, QGridLayout, QGroupBox, QSpacerItem, QSizePolicy
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QGroupBox, QGridLayout
+from PyQt5.QtWidgets import QGroupBox, QSpacerItem, QSizePolicy
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 

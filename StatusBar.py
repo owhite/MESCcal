@@ -3,6 +3,8 @@ import time
 import math
 import colorsys
 
+import ColorSegmentRing
+
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import Qt, QRectF
 from PyQt5.QtWidgets import QTabWidget, QHBoxLayout
@@ -79,16 +81,22 @@ class createStatusBar(QtWidgets.QMainWindow):
         # self.winOpenButton.setCheckable(True)
         # self.winOpenButton.setStyleSheet("background-color: white; border: 1px solid green;")
 
+        self.adc1_ring = ColorSegmentRing.colorSegmentRing()
+        self.adc1_ring.setVisible(True)
+
         h1.addWidget(self.vbusText)
         h1.addWidget(self.phaseAText)
         h1.addWidget(self.tmosText)
         h1.addWidget(self.tmotText)
         h1.addWidget(self.ehzText)
+        h1.addWidget(self.adc1_ring)
+
         # h1.addWidget(self.winOpenButton)
         layout.addWidget(container1)
 
         self.status_bar.addWidget(self.layout_widget)
         self.statusBar().addPermanentWidget( self.statusText )
+
 
     def customButtonHoverEnter(self, event, message):
         self.prevStatusText = self.statusText.text()
