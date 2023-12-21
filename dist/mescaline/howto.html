@@ -1,0 +1,141 @@
+<H2 style="padding:0; margin:0; text-align:center;">How to....</H2>
+<BR>
+<h3 style="padding:0; margin:0;">Connect to the serial port.</h3>
+<ul style="padding:0; margin:0;">
+<li> Connect USB to MESC board and computer
+<li> Power up the controller
+<li> Go to Port tab
+<li> Select the correct serial port on pull down menu
+<li> Select the "Open" button
+<li> Note the bottom tool bar has "Get" and "Set" buttons
+<li> Those buttons will change color when the serial is connected
+</ul>
+<BR>
+<h3 style="padding:0; margin:0">Debug serial port.</h3>
+The mescaline PYQT5 environment that does serial handling is very stable.&nbsp; If you're having trouble connecting it probably does not have to do with mescaline.&nbsp; If you can't connect to the serial try:
+<ul style="padding:0; margin:0;">
+<li> Connecting the MESC board to your computer and THEN powering up the MESC board
+<li> Checking to see if your computer sees a new port 
+<li> Using a different terminal program (for Macs and Linux: screen,&nbsp;Windows: minicom)
+</ul>
+If you can't view the MESC board through your serial using another terminal program you are not likely to get it to work on mescaline either. 
+<BR>
+<h3 style="padding:0; margin:0;">Send serial commands.</h3>
+<ul style="padding:0; margin:0;">
+<li> The Port tab has a send buffer
+<li> To test your connection,&nbsp;type a simple command (e.g.,&nbsp;"get") and hit send
+<li> Results should appear in text box above the send buffer
+</ul>
+<br>
+<h3 style="padding:0; margin:0;">Stream serial data from MESC firmware.</h3>
+<ul style="padding:0; margin:0;">
+<li> Select "Show json stream" radio button on Port tab
+<li> A new text buffer should appear
+<li> Select the "Data" button bottom toolbar
+<li> The Data button will change color if json is streaming
+<li> Json data will appear also in the new text buffer
+<li> Note the bottom tool bar has values for Vbus,&nbsp;Phase Amps,&nbsp;etc.
+<li> Those values will now be update with real time data
+</ul>
+<br>
+<h3 style="padding:0; margin:0;">View the MESC settings.</h3>
+<ul style="padding:0; margin:0;">
+<li> Select the Get button on the xbottom toolbar
+<li> A large stream of variables should appear in the text buffer Port tab
+<li> The results also update the values in the other tabs (e.g.,&nbsp;ESC Values,&nbsp;UART)
+</ul>
+<br>
+<h3 style="padding:0; margin:0;">Change MESC settings on the command line.</h3>
+For example,&nbsp;to change the number of pole pairs:
+<ul style="padding:0; margin:0;">
+<li> Type,&nbsp;"set pole_pairs 5" in the send buffer of the Port tab
+<li> Hit send,&nbsp;or type "enter"
+<li> MESC should report pole_pairs was changed in the text buffer of Port tab
+</ul>
+<br>
+<h3 style="padding:0; margin:0;">Change MESC settings using the mescaline interface.</h3>
+For example,&nbsp;to change the number of pole pairs:
+<ul style="padding:0; margin:0;">
+<li> First update all values by selecting "Get" in the toolbar
+<li> Go to the "ESC Values" tab
+<li> The values for all variables will appear in small text boxes
+<li> Type in a new value in the "pole_pairs" text buffer
+<li> Hit the button to the left of the pole_pars buffer and the value will chnage
+</ul>
+<br>
+<h3 style="padding:0; margin:0;">Save all MESC settings.</h3>
+Changes that are made to settings are temporary,&nbsp;e.g.,&nbsp;if you reboot your board the changes will not be saved.&nbsp; To save your settings,&nbsp;simply select the "Set" button in the bottom toolbar.&nbsp; MESC should report settings were save in the text buffer of Port tab.
+<br>
+<h3 style="padding:0; margin:0;">Run additonal apps.</h3>
+<ul style="padding:0; margin:0;">
+<li> Select the "Apps" tab
+<li> Buttons will display the available apps,&nbsp;select one.
+<li> This launches a stand alone window that will display data or do other things
+</ul>
+<br>
+<h3 style="padding:0; margin:0;">Create a new app.</h3>
+You can create your own apps that are launched by mescaline if you know python and follow a few rules. 
+<ul style="padding:0; margin:0;">
+<li> The apps directory is specified in a configuration file,&nbsp;currently name "app_specs.json"
+<li> It is configured in the "module_directory" of that file
+<li> Take a look in the apps directory,&nbsp;you can see a set of python modules
+<li> Read the document in that directory for the basic requirements to make an app
+</ul>
+<br>
+<h3 style="padding:0; margin:0;">Build a MESC controller.</h3>
+<ul style="padding:0; margin:0;">
+<li> Download the files <a href="https://github.com/badgineer/MP2-ESC">from here</a>
+<li> Order the boards from <a href="jlcpcb.com">jlcpcb.com</a>
+<li> Read the documentation to assemble the board <a href="https://github.com/badgineer/MP2-ESC/tree/main/docs">from here</a>
+</ul>
+<br>
+<h3 style="padding:0; margin:0;">Use the STM32CubeIDE debugger with MESC Firmware.</h3>
+<ul style="padding:0; margin:0;">
+<li> Install the <a href="https://github.com/davidmolony/MESC_Firmware">MESC_firmware</a>
+<li> Watch <a href="https://www.youtube.com/watch?v=OsqP2L_DqyM">this video</a>
+</ul>
+<br>
+<h3 style="padding:0; margin:0;">Flash MESC firmware.</h3>
+See <a href="https://www.youtube.com/watch?v=ffT_TOowyAI">this video</a>.
+<br>
+<h3 style="padding:0; margin:0;">Determine your motor parameters.</h3>
+Read <a href="https://github.com/badgineer/MP2-ESC/blob/main/docs/MOTOR_PARAM.md">this documentation</a>.
+<br>
+<h3 style="padding:0; margin:0;">Understand all the MESC commands.</h3>
+The mescaline interface is simply sending commands to the MESC firmware through the serial.&nbsp; The interface commands were written by <a href="https://github.com/Netzpfuscher">Netzpfuscher</a> who is responsible for the MESC firmware serial terminal.&nbsp; You can try terminal commands yourself, &nbsp; (see:&nbsp; <i>Send serial commands</i>) or users are encouraged to try it using a terminal program (screen, for Macs and linux, or minicom for Windows). In any case,&nbsp; the following is a short list of MESC terminal commands available to you:
+<ul style="padding:0; margin:0;">
+<li> <b>get</b> <i>retreives all values from MESC</i>
+<li> <b>set pole_pairs 5</b> <i>sets the variable pole_pairs to 5,&nbsp;many other values can be set</i>
+<li> <b>log -fl</b> <i>provides a burst of values from fastloop stored in a circular buffer</i>
+<li> <b>status json</b> <i>provides a continuous stream MESC values in json at 10hz</i>
+<li> <b>status stop</b> <i>stops the json stream</i>
+<li> <b>save</b> <i>writes all your settings the MCU</i>
+<li> <b>save -d</b> <i>deletes all your settings the MCU. This resets to parameters specified by the original firmware.</i>
+</ul>
+<br>
+<h3 style="padding:0; margin:0;">Understand error codes.</h3>
+The MESC firmware error codes are defined in this 
+<a href="https://github.com/davidmolony/MESC_Firmware/blob/master/MESC_Common/Inc/MESCerror.h">header file</a>. &nbsp; A subset of those codes are:
+<ul style="padding:0; margin:0;">
+  <li>OVERCURRENT_PHA :: 1
+  <li>OVERCURRENT_PHB :: 2
+  <li>OVERCURRENT_PHC :: 3
+  <li>OVERVOLTAGE :: 4
+  <li>UNDERVOLTAGE :: 5
+  <li>BRK :: 6
+  <li>OVERTEMPU :: 7
+  <li>OVERTEMPV :: 8
+  <li>OVERTEMPW :: 9
+  <li>OVERTEMP_MOTOR :: 10
+</ul>
+<br>
+Error codes are passed on to the mesc "error" value.  Error values are stored in "error" represent binary positions:
+<ul style="padding:0; margin:0;">
+  <li>OVERCURRENT_PHA :: 00001 (1 position)
+  <li>OVERCURRENT_PHB :: 00010 (2 position,  etc..)
+  <li>OVERCURRENT_PHC :: 00100 
+  <li>OVERVOLTAGE :: 01000
+  <li>UNDERVOLTAGE :: 10000
+</ul>
+So for example if you get an error code 16, that correspondds to 10000, or under voltage.  This enables multiple codes to be stored in the same value,  so for example an error showing overtemp and undervolage would be 0010000 && 1000000 = 1010000, and would be reported as 80.  
+
