@@ -24,6 +24,7 @@ class createStatusBar(QtWidgets.QMainWindow):
         self.setStatusBar = parent.setStatusBar
         self.statusBar = parent.statusBar
         self.port = parent.port
+        self.os = parent.os
         self.serialPayload = parent.serialPayload
         self.initUI()
 
@@ -41,20 +42,20 @@ class createStatusBar(QtWidgets.QMainWindow):
         h1 = QtWidgets.QHBoxLayout(container1)
 
         # Create buttons
-        self.getButton = CapsuleButton("Get")
+        self.getButton = CapsuleButton(self, "Get")
         self.getButton.setStyleSheet("background-color : yellow;" "border :1px solid black;") 
         self.getButton.clicked.connect(self.getSerialData)
         self.getButton.enterEvent = lambda event: self.customButtonHoverEnter(event, "Get: retreive values from MESC, load into tabs")
         self.getButton.leaveEvent = self.customButtonHoverLeave
         QTimer.singleShot(100, lambda: self.getButton.enterEvent(None)) # does a little refresh that helps
 
-        self.saveButton = CapsuleButton("Set")
+        self.saveButton = CapsuleButton(self, "Set")
         self.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid black;") 
         self.saveButton.enterEvent = lambda event: self.customButtonHoverEnter(event, "Save: store all values in MESC")
         self.saveButton.leaveEvent = self.customButtonHoverLeave
         self.saveButton.clicked.connect(self.saveSerialData)
 
-        self.streamButton = CapsuleButton("Data")
+        self.streamButton = CapsuleButton(self, "Data")
         self.streamButton.setStyleSheet("background-color : white;" "border :1px solid black;") 
         self.streamButton.clicked.connect(self.getSerialStream)
         self.streamButton.enterEvent = lambda event: self.customButtonHoverEnter(event, "Data: toggles data streaming from MESC")
@@ -79,6 +80,8 @@ class createStatusBar(QtWidgets.QMainWindow):
         self.adc1_ring.setVisible(True)
         self.adc1_ring.ring_text = 'adc1'
         self.adc1_ring.ring_text_size = 12
+        if self.os == 'Win':
+            self.adc1_ring.ring_text_size = 6
 
         h1.addWidget(self.vbusText)
         h1.addWidget(self.phaseAText)
@@ -181,10 +184,16 @@ class createStatusBar(QtWidgets.QMainWindow):
         return html_color
 
 class CapsuleButton(QtWidgets.QPushButton):
-    def __init__(self, text, parent=None):
-        super(CapsuleButton, self).__init__(text, parent)
+    def __init__(self, parent, text):
+        super().__init__(parent)
+        self.parent = parent
+        self.text = text
+        self.os = parent.os
         self.setFixedHeight(24)
         self.setFixedWidth(32)
+        if self.os == 'Win':
+            self.setFixedHeight(32)
+            self.setFixedWidth(50)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -196,4 +205,4 @@ class CapsuleButton(QtWidgets.QPushButton):
         painter.setPen(Qt.black)
         painter.drawRoundedRect(rect, rect.height() / 2, rect.height() / 2)
         painter.setPen(self.palette().text().color())
-        painter.drawText(rect, Qt.AlignCenter, self.text())
+        painter.drawText(rect, Qt.AlignCenter, self.text)

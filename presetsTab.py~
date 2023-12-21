@@ -1,299 +1,229 @@
 import re
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QPlainTextEdit, QTabWidget, QVBoxLayout, QGridLayout, QGroupBox, QRadioButton, QSpacerItem
+from PyQt5.QtWidgets import QPlainTextEdit, QHBoxLayout, QVBoxLayout, QGridLayout, QGroupBox, QCheckBox, QLabel
 from PyQt5.QtCore import Qt
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
+from PyQt5.QtGui import QFont  # Import QFont from QtGui
+from functools import partial
+import colorsys
+import ColorSegmentRing
 
-### Port connection tab -- handles serial connection and sending commands
+### Presets tab -- provides user with simple methods to turn motor
 ###
-class FirstTab(QtWidgets.QMainWindow): 
+class presetsTab(QtWidgets.QMainWindow):
 
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
         self.port = parent.port
         self.statusText = parent.statusBar.statusText
-        self.getButton = parent.statusBar.getButton
-        self.saveButton = parent.statusBar.saveButton
-        self.tButton = parent.statusBar.getButton
-        self.serialStreamingOn = parent.serialStreamingOn
-        self.serialPayload = parent.serialPayload
-        self.port_substring = parent.port_substring
-        self.max_chars = 3000
         self.customButtonHoverEnter = parent.statusBar.customButtonHoverEnter
         self.customButtonHoverLeave = parent.statusBar.customButtonHoverLeave
-
+        self.dataEntryButtonClicked = parent.dataEntryButtonClicked
         self.initUI()
 
     def initUI(self):
-        self.jsonData = QtWidgets.QTextEdit(self) # making this one in the parent
-        self.jsonDataView   = jsonDataView(self)
-        self.serialDataView = SerialDataView(self) # these make their own QTextEdit boxes
-        self.serialSendView = SerialSendView(self)
+        self.big_font = QtGui.QFont()
+        self.big_font.setPointSize(18)
 
-        self.setCentralWidget( QtWidgets.QWidget(self) )
-        layout = QtWidgets.QVBoxLayout( self.centralWidget() )
-        self.radio_button = QtWidgets.QRadioButton('Show json stream')
-        self.radio_button.toggled.connect(self.toggle_text_edit)
-        self.jsonData.setVisible(False)
+        self.mid_font = QtGui.QFont()
+        self.mid_font.setPointSize(14)
 
-        layout.addWidget(self.radio_button)
-        layout.addWidget(self.jsonDataView) # uncomment to see a json box
-        layout.addWidget(self.serialDataView)
-        layout.addWidget(self.serialSendView)
-        layout.setContentsMargins(3, 3, 3, 3)
+        self.smol_font = QtGui.QFont()
+        self.smol_font.setPointSize(12)
 
-        ### Tool Bar ###
-        self.toolBar = ToolBar(self)
-        self.addToolBar(self.toolBar)
+        self.setCentralWidget(QtWidgets.QWidget(self))
+
+        scroll_area = QtWidgets.QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+
+        scroll_content = QtWidgets.QWidget(scroll_area)
+        main_layout = QtWidgets.QVBoxLayout(scroll_content)
+        layout = QtWidgets.QFormLayout()
+        layout.setFieldGrowthPolicy(QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
+        main_layout.setContentsMargins(20, 3, 200, 3)
+        main_layout.addLayout(layout)
+
+        layout.addWidget(self.titleBox())
+        layout.addWidget(self.openLoopBox())
+        layout.addWidget(self.throttleBox())
+
+        scroll_area.setWidget(scroll_content)
+        self.setCentralWidget(scroll_area)
+
+    def throttleBox(self):
+        box = QtWidgets.QGroupBox('')
+        box.setFont(self.big_font)
+        box.setStyleSheet("QGroupBox { border: 1px solid black; }")
+
+        layout = QtWidgets.QVBoxLayout()
+
+        combined_layout = QtWidgets.QHBoxLayout()
+        combined_layout.setSpacing(0)
+
+        # Create the first QVBoxLayout for radio buttons
+        layout1 = QtWidgets.QVBoxLayout()
+
+        label = QtWidgets.QLabel('Throttle test')
+        label.setFont(self.big_font)
+        layout1.addWidget(label)
+
+        self.checkBoxRow(layout1, 'set curr_max 40', '', '(40 Amps, something safe)')
+        self.checkBoxRow(layout1, 'set motor_sensor 0', '', '(0 = SL, "sensorless")')
+        self.checkBoxRow(layout1, 'status json', 'status stop', '(stream variables to status bar)')
+        self.checkBoxRow(layout1, 'set input_opt 1', 'set input_opt 8', '(checked sets to 1 = ADC1, unchecked sets 8 = UART )')
+        self.setValueRow(layout1, 'adc1_min', 'set adc1_min')
+        self.setValueRow(layout1, 'adc1_max', 'set adc1_max')
+
+        # Create the second QVBoxLayout
+        layout2 = QtWidgets.QVBoxLayout()
+        # decided not to do this. 
+        # self.adc1_ring = ColorSegmentRing.colorSegmentRing()
+        # self.adc1_ring.setVisible(True)
+        # self.adc1_ring.ring_text = 'adc1'
+        # self.adc1_ring.ring_text_size = 16
+        # layout2.addWidget(self.adc1_ring)
+
+        combined_layout.addLayout(layout1)
+        combined_layout.addLayout(layout2)
+
+        layout.addLayout(combined_layout)
+
+        label = QtWidgets.QLabel("Physically connect a potentiometer to the adc1 input of your mesc board.  Once you have selected \"status json\" you should see the throttle widget updating when you turn your potentiometer.  Change the set input_opt value to 1 to send adc1 values to your controller.")
+
+        label.setFont(self.smol_font)
+        label.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
+        label.setWordWrap(True)
+        layout.addWidget(label)
+        box.setLayout(layout)
+
+        return box
+
+    def openLoopBox(self):
+        box = QtWidgets.QGroupBox('')
+        box.setFont(self.big_font)
+        box.setStyleSheet("QGroupBox { border: 1px solid black; }")
+
+        layout = QtWidgets.QVBoxLayout()
+
+        combined_layout = QtWidgets.QHBoxLayout()
+
+        # Create the first QVBoxLayout for radio buttons
+        layout1 = QtWidgets.QVBoxLayout()
+
+        label = QtWidgets.QLabel('Run in open loop')
+        label.setFont(self.big_font)
+        layout1.addWidget(label)
+
+        label = QtWidgets.QLabel("Running in open loop mode turns the motor with no feedback control.")
+        label.setFont(self.smol_font)
+        layout1.addWidget(label)
+
+        self.checkBoxRow(layout1, 'set curr_max 40', '', '(40 Amps, something safe)')
+        self.checkBoxRow(layout1, 'set input_opt 8', '', '(8 = UART,  meaning: receive control input from UART)')
+        self.checkBoxRow(layout1, 'set motor_sensor 2', '', '(2 = open loop)')
+        self.checkBoxRow(layout1, 'set ol_step 20', '', '(number of steps per pulse)')
+        self.checkBoxRow(layout1, 'status json', 'status stop', '(stream variables to status bar)')
+        self.checkBoxRow(layout1, 'set uart_req 10', 'set uart_req 0', '(requesting 10 Amps,  uncheck to stop)')
+
+        # Create the second QVBoxLayout
+        layout2 = QtWidgets.QVBoxLayout()
+        row = QtWidgets.QHBoxLayout()
+        label = QtWidgets.QLabel('')
+        label.setFont(self.smol_font)
+        row.addWidget(label)
+        layout2.addLayout(row)
+
+        combined_layout.addLayout(layout1)
+        combined_layout.addLayout(layout2)
+
+        layout.addLayout(combined_layout)
+
+        label = QtWidgets.QLabel("Selecting these click boxes should get your motor spinning.  status json is optional but it will show some interesting results in the status bar. To stop,  unselect the last checkbox.  If the motor is attempting to spin or not spinning check your wiring and controller.  If it's a large motor you may need to set curr_max to something > 40 Amps.")
+        label.setFont(self.smol_font)
+        label.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
+        label.setWordWrap(True)
+        layout.addWidget(label)
+        box.setLayout(layout)
+
+        return box
+
+    def titleBox(self):
+        box = QtWidgets.QGroupBox('')
+        box.setFont(self.big_font)
+        box.setFixedHeight(190) # I dislike this is the only way to control space around text
+        box.setStyleSheet("QGroupBox { border: 2px solid black; }")
+        # Create the first QVBoxLayout for radio buttons
+        layout = QtWidgets.QVBoxLayout()
+
+        label = QtWidgets.QLabel('Interactive presets for testing and operation')
+        label.setFont(self.big_font)
+        layout.addWidget(label)
+
+        label = QtWidgets.QLabel('Use these presets to learn how to run the MESC controller.  Each block of checkboxes shows you how you which values to set in order to get the controller to do something.  When you select each checkbox it will send the listed command to the serial.  The serial port must be open to start and you may want to stream data to update the status bar by selecting the Data button.  If you like your settings select the "set" button to save your parameters.')
+        label.setFont(self.mid_font)
+        label.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
+        label.setWordWrap(True)
+        layout.addWidget(label)
+
+        label = QtWidgets.QLabel('Caution: remove obstructions around you motor and be ready for it to turn.')
+        label.setFont(self.mid_font)
+        label.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
+        label.setWordWrap(True)
+        layout.addWidget(label)
+
+        box.setLayout(layout)
+
+        return box
+
+    def setValueRow(self, layout, mesc_value, label_text):
+        row = QtWidgets.QHBoxLayout()
+        row.setSpacing(10)
+
+        entry_item = QtWidgets.QLineEdit()
+        entry_item.setFixedWidth(60)
+        entry_item.setMinimumHeight(22)
+
+        pb = QtWidgets.QPushButton(mesc_value)
+        pb.setFixedWidth(100)
+        pb.setMinimumHeight(12)
+        pb.setToolTip("set the minimum value range for adc1")
+        pb.clicked.connect(partial(self.dataEntryButtonClicked, mesc_value, entry_item))
+        row.addWidget(pb)
         
-        ### Signal Connect ###
-        self.toolBar.portOpenButton.clicked.connect(self.portOpen)
-        self.toolBar.portRefreshButton.clicked.connect(self.portRefresh)
-        self.serialSendView.serialSendSignal.connect(self.sendFromPort)
-        self.port.readyRead.connect(self.readFromPort)
+        row.addWidget(entry_item)
 
-    # Toggle the visibility of the QTextEdit based on the radio button state
-    def toggle_text_edit(self, checked):
-        self.jsonData.setVisible(checked)
+        label = QtWidgets.QLabel(label_text)
+        label.setFont(self.smol_font)
+        label.setAlignment(QtCore.Qt.AlignLeft)
+        row.setAlignment(QtCore.Qt.AlignLeft)
+        row.addWidget(label)
 
-    def portOpen(self, flag):
-        if flag:
-            self.port.setBaudRate( self.toolBar.baudRate() )
-            self.port.setPortName( self.toolBar.portName() )
-            self.port.setDataBits( 8 )
-            self.port.setParity( 0 ) 
-            self.port.setStopBits( 0 ) 
-            self.port.setFlowControl( 0 ) 
-            r = self.port.open(QtCore.QIODevice.ReadWrite)
-            if not r:
-                # this does not test if it is already open and happy. 
-                print ( self.toolBar.portName() )
-                self.statusText.setText('Port open: error')
-                self.toolBar.portOpenButton.setChecked(False)
-                # self.toolBar.serialControlEnable(True)
-            else:
-                self.statusText.setText('Port opened')
-                # self.toolBar.serialControlEnable(False)
+        layout.addLayout(row)
+
+    def checkBoxRow(self, layout, start_text, stop_text, label_text):
+        row = QtWidgets.QHBoxLayout()
+        row.setSpacing(10)
+
+        # Create a QCheckBox
+        cb = QtWidgets.QCheckBox('')
+        cb.stateChanged.connect(lambda state: self.onCheckboxChange(state, start_text, stop_text))
+        cb.setFont(self.smol_font)
+        row.addWidget(cb)
+        
+        # Create a QLabel with left alignment
+        label = QtWidgets.QLabel(start_text + " " + label_text)
+        label.setFont(self.smol_font)
+        label.setAlignment(QtCore.Qt.AlignRight)  # Set left alignment
+        row.setAlignment(QtCore.Qt.AlignLeft)
+        row.addWidget(label)
+
+        layout.addLayout(row)
+
+    def onCheckboxChange(self, state, start, stop):
+        if state == 2:
+            text = start + '\r\n'
         else:
-            self.port.close()
-            self.statusText.setText('Port closed')
-            # self.toolBar.serialControlEnable(True)
-        
-    def portRefresh(self, flag):
-        self.port.close() # bad idea? 
-        self.portOpen(True)
-        self.statusText.setText('Port refresh')
-        l = []
-        count = 0
-        for port in [ port.portName() for port in QSerialPortInfo().availablePorts() ]:
-            l.append(port)
-            if self.port_substring in port:
-                l[count] = l[0]
-                l[0] = port
-            count = count + 1
+            text = stop + '\r\n'
 
-        self.toolBar.portNames.clear()       
-        self.toolBar.portNames.addItems( l ) 
-
-    # among other things this loads the serial payload
-    #  which is detected by parent and then loaded into
-    #  UI variables`
-    def readFromPort(self):
-        data = self.port.readAll().data().decode()
-        # strip vt100 chars
-        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-        data = ansi_escape.sub('', data)
-        data = re.sub('\| ', '\t', data)
-
-        # get current buffer, add the data
-        r = self.serialPayload.reportString() + data
-        
-        # Extract json strings from input buffer
-        text_inside_braces = ''
-        pattern = r'(\{[^}]+\}\r\n)' # find text between "{.*}\r\n"
-        matches = re.findall(pattern, r) # get all matches
-        text_inside_braces = ''.join(matches) # Concatenate all matches
-        remaining_text = re.sub(pattern, '', r) # remove all matches
-
-        if len(text_inside_braces) > 0:
-            t = text_inside_braces.replace('\r', '')
-            self.jsonDataView.appendJsonText(t, QtGui.QColor(0, 0, 0) )
-            self.parent.updateJsonData(t)
-            self.serialPayload.resetTimer() 
-
-        # hoping this means we have a complete command block
-        if remaining_text.endswith("@MESC>"):
-            self.serialDataView.appendSerialText( remaining_text, QtGui.QColor(0, 0, 0) )
-            self.parent.updateTabs()
-            
-        self.serialPayload.setString(remaining_text)
-
-        # Last thing. bump the timer that serial data was received
-
-    def sendFromPort(self, text):
-        text = text + '\r\n'
-        self.serialPayload.resetString()
         self.port.write( text.encode() )
-        self.serialDataView.appendSerialText( text, QtGui.QColor(0, 0, 255) )
-
-
-class jsonDataView(QtWidgets.QWidget):
-    def __init__(self, parent):
-
-        super(jsonDataView, self).__init__(parent)
-
-        self.max_chars = parent.max_chars
-
-        self.jsonData = parent.jsonData
-
-        # self.jsonData = QtWidgets.QTextEdit(self)
-        self.jsonData.setReadOnly(True)
-        self.jsonData.setFontFamily('Courier New')
-        self.jsonData.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.setLayout( QtWidgets.QGridLayout(self) )
-        self.layout().addWidget(self.jsonData, 0, 0, 1, 1)
-        self.layout().setContentsMargins(2, 2, 2, 2)
-        
-    def appendJsonText(self, appendText, color):
-        self.jsonData.moveCursor(QtGui.QTextCursor.End)
-        self.jsonData.setFontFamily('Courier New')
-        self.jsonData.setTextColor(color)
-        current_text = self.jsonData.toPlainText()
-
-        if len(current_text) > self.max_chars:
-            # If it exceeds, truncate the text
-            new_text = current_text[len(current_text)-self.max_chars:]
-            self.jsonData.setPlainText(new_text)
-            self.jsonData.moveCursor(QtGui.QTextCursor.End)
-
-        self.jsonData.insertPlainText(appendText)
-        self.jsonData.moveCursor(QtGui.QTextCursor.End)
-
-class SerialDataView(QtWidgets.QWidget):
-    def __init__(self, parent):
-
-        super(SerialDataView, self).__init__(parent)
-
-        self.port = parent.port
-        self.max_chars = parent.max_chars
-        self.serialData = QtWidgets.QTextEdit(self)
-        self.serialData.setReadOnly(True)
-        self.serialData.setFontFamily('Courier New')
-        self.serialData.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.setLayout( QtWidgets.QGridLayout(self) )
-        self.layout().addWidget(self.serialData, 0, 0, 1, 1)
-        self.layout().setContentsMargins(2, 2, 2, 2)
-        
-    def appendSerialText(self, appendText, color):
-        self.serialData.moveCursor(QtGui.QTextCursor.End)
-        self.serialData.setFontFamily('Courier New')
-        self.serialData.setTextColor(color)
-        current_text = self.serialData.toPlainText()
-
-        if len(current_text) > self.max_chars:
-            # If it exceeds, truncate the text
-            new_text = current_text[len(current_text)-self.max_chars:]
-            self.serialData.setPlainText(new_text)
-            self.serialData.moveCursor(QtGui.QTextCursor.End)
-
-        self.serialData.insertPlainText(appendText)
-        self.serialData.moveCursor(QtGui.QTextCursor.End)
-
-class SerialSendView(QtWidgets.QWidget):
-
-    serialSendSignal = QtCore.pyqtSignal(str)
-
-    def __init__(self, parent):
-        super(SerialSendView, self).__init__(parent)
-
-        self.port = parent.port
-        self.sendData = QtWidgets.QLineEdit(self)
-        self.sendData.returnPressed.connect(self.onReturnPressed)
-        self.sendData.setMaximumWidth(200)
-        self.sendData.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-
-        self.sendButton = QtWidgets.QPushButton('Send')
-        self.sendButton.clicked.connect(self.sendButtonClicked)
-        self.sendButton.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Preferred)
-        s = 'Enter string and send cmd to serial'
-        self.sendButton.enterEvent = lambda event: parent.customButtonHoverEnter(event, s)
-        self.sendButton.leaveEvent = parent.customButtonHoverLeave
-        
-        spacer = QtWidgets.QSpacerItem(400, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
-
-        self.setLayout( QtWidgets.QHBoxLayout(self) )
-        self.layout().addSpacerItem(spacer)
-        self.layout().addWidget(self.sendData)
-        self.layout().addWidget(self.sendButton)
-
-    def onReturnPressed(self):
-        text = self.sendData.text()
-        print(f'You typed: {text}')
-        text = text + '\r\n'
-        self.port.write( text.encode() )
-        self.sendData.clear()
-
-    def sendButtonClicked(self):
-        text = self.sendData.text()
-        print(f'You typed: {text}')
-        text = text + '\r\n'
-        self.port.write( text.encode() )
-        self.sendData.clear()
-
-class ToolBar(QtWidgets.QToolBar):
-    def __init__(self, parent):
-        super(ToolBar, self).__init__(parent)
-        
-        self.portOpenButton = QtWidgets.QPushButton('Open')
-        self.portOpenButton.enterEvent = lambda event: parent.customButtonHoverEnter(event, "Open or close selected port")
-        self.portOpenButton.leaveEvent = parent.customButtonHoverLeave
-        # self.portOpenButton.setToolTip('attempts serial port open')
-        self.portOpenButton.setCheckable(True)
-        self.portOpenButton.setMinimumHeight(32)
-
-        self.portRefreshButton = QtWidgets.QPushButton('Refresh')
-        self.portRefreshButton.enterEvent = lambda event: parent.customButtonHoverEnter(event, "Refreshes available serial ports")
-        self.portRefreshButton.leaveEvent = parent.customButtonHoverLeave
-        self.portRefreshButton.setMinimumHeight(32)
-
-        self.portNames = QtWidgets.QComboBox(self)
-        l = []
-        count = 0
-        for port in [ port.portName() for port in QSerialPortInfo().availablePorts() ]:
-            l.append(port)
-            if 'cu.usbmodem' in port:
-                l[count] = l[0]
-                l[0] = port
-            count = count + 1
-
-        self.portNames.addItems( l )
-        self.portNames.setMinimumHeight(32)
-
-        self.baudRates = QtWidgets.QComboBox(self)
-        self.baudRates.addItems([
-            '110', '300', '600', '1200', '2400', '4800', '9600', '14400', '19200', '28800', 
-            '31250', '38400', '51200', '56000', '57600', '76800', '115200', '128000', '230400', '256000', '921600'
-        ])
-        self.baudRates.setCurrentText('115200')
-        self.baudRates.setMinimumHeight(30)
-
-        self.addWidget( self.portOpenButton )
-        self.addWidget( self.portRefreshButton )
-        self.addWidget( self.portNames )
-        self.addWidget( self.baudRates )
-
-    def serialControlEnable(self, flag):
-        self.portNames.setEnabled(flag)
-        self.baudRates.setEnabled(flag)
-        self.dataBits.setEnabled(flag)
-        self._parity.setEnabled(flag)
-        self.stopBits.setEnabled(flag)
-        self._flowControl.setEnabled(flag)
-        
-    def baudRate(self):
-        return int(self.baudRates.currentText())
-
-    def portName(self):
-        return self.portNames.currentText()
-

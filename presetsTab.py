@@ -16,6 +16,7 @@ class presetsTab(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.parent = parent
         self.port = parent.port
+        self.os = parent.os
         self.statusText = parent.statusBar.statusText
         self.customButtonHoverEnter = parent.statusBar.customButtonHoverEnter
         self.customButtonHoverLeave = parent.statusBar.customButtonHoverLeave
@@ -24,13 +25,17 @@ class presetsTab(QtWidgets.QMainWindow):
 
     def initUI(self):
         self.big_font = QtGui.QFont()
-        self.big_font.setPointSize(18)
-
         self.mid_font = QtGui.QFont()
-        self.mid_font.setPointSize(14)
-
         self.smol_font = QtGui.QFont()
+
+        self.big_font.setPointSize(16)
+        self.mid_font.setPointSize(14)
         self.smol_font.setPointSize(12)
+
+        if self.os == 'Win':
+            self.big_font.setPointSize(14)
+            self.mid_font.setPointSize(12)
+            self.smol_font.setPointSize(10)
 
         self.setCentralWidget(QtWidgets.QWidget(self))
 
@@ -51,6 +56,10 @@ class presetsTab(QtWidgets.QMainWindow):
         scroll_area.setWidget(scroll_content)
         self.setCentralWidget(scroll_area)
 
+    def updateThisTab(self):
+        print(f"User opened {current_tab_name}")
+
+        
     def throttleBox(self):
         box = QtWidgets.QGroupBox('')
         box.setFont(self.big_font)
@@ -152,6 +161,9 @@ class presetsTab(QtWidgets.QMainWindow):
         box = QtWidgets.QGroupBox('')
         box.setFont(self.big_font)
         box.setFixedHeight(190) # I dislike this is the only way to control space around text
+        if self.os == 'Win':
+            box.setFixedHeight(500) # difference in size is very weird 
+            
         box.setStyleSheet("QGroupBox { border: 2px solid black; }")
         # Create the first QVBoxLayout for radio buttons
         layout = QtWidgets.QVBoxLayout()

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import sys, re, math, json
+import sys, re, math, json, platform
 import Payload, mescalineModuleLoad, FirstTab, StatusBar, appsTab, aboutTab, howtoTab, presetsTab, ColorSegmentRing
 import importlib.util
 
@@ -35,9 +35,21 @@ class Mescaline(QtWidgets.QMainWindow):
         self.port_substring = self.interface["port_substring"]
         self.module_directory = self.interface["module_directory"]
 
+        system = platform.system()
+
+        self.os = 'Mac'
+        if system == "Windows":
+            self.os = 'Win'
+            self.min_width = 1200
+            self.min_height = 800
+        else:
+            self.os = 'Mac'
+            self.min_width = 800
+            self.min_height = 800
+
         ### Window ### 
-        self.setMinimumWidth(800)
-        self.setMinimumHeight(800)
+        self.setMinimumWidth(self.min_width)
+        self.setMinimumHeight(self.min_height)
 
         ### Serial stuff ###
         self.port = QSerialPort()
@@ -79,13 +91,17 @@ class Mescaline(QtWidgets.QMainWindow):
         self.howtoTab = howtoTab.howtoTab(self)
         self.tabWidget.addTab(self.howtoTab,"How to")
 
+        system = platform.system()
+
         ### Acknowledgements and user information ###
         self.aboutTab = aboutTab.aboutTab(self)
-        self.tabWidget.addTab(self.aboutTab,"About")
+        self.tabWidget.addTab(self.aboutTab,self.os)
 
-        self.setWindowTitle("mescaline")
+        self.setWindowTitle("mescaline ({0})".format(self.os))
         self.setCentralWidget(self.tabWidget)
 
+        self.tabWidget.currentChanged.connect(self.tab_changed)
+        
     def sendDataToApps(self, d):
         if len(self.loadModules.windowNames) > 0:
             for n in self.loadModules.windowNames:
@@ -201,6 +217,11 @@ class Mescaline(QtWidgets.QMainWindow):
                 return True
             except ValueError:
                 return False
+
+    def tab_changed(self, index):
+        current_tab_name = self.tabWidget.tabText(index)
+        if current_tab_name == 'Presets':
+            self.presetsTab.updateThisTab()
 
 
 ### Creates a tab that is described in json config file
