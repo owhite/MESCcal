@@ -2,7 +2,6 @@ import re
 import time
 import math
 import colorsys
-
 import ColorSegmentRing
 
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -76,13 +75,10 @@ class createStatusBar(QtWidgets.QMainWindow):
         self.tmotText = QtWidgets.QLabel('TMOT:\n  ')
         self.ehzText = QtWidgets.QLabel('eHz:\n  ')
 
-        # self.winOpenButton = QtWidgets.QPushButton('Win')
-        # self.winOpenButton.clicked.connect(self.open_new_window)
-        # self.winOpenButton.setCheckable(True)
-        # self.winOpenButton.setStyleSheet("background-color: white; border: 1px solid green;")
-
         self.adc1_ring = ColorSegmentRing.colorSegmentRing()
         self.adc1_ring.setVisible(True)
+        self.adc1_ring.ring_text = 'adc1'
+        self.adc1_ring.ring_text_size = 12
 
         h1.addWidget(self.vbusText)
         h1.addWidget(self.phaseAText)
@@ -97,6 +93,39 @@ class createStatusBar(QtWidgets.QMainWindow):
         self.status_bar.addWidget(self.layout_widget)
         self.statusBar().addPermanentWidget( self.statusText )
 
+    # manage data coming from get
+    def updateStatusPayload(self, struct):
+        adc1_min = None
+        adc1_max = None
+        for n in struct['names']:
+            if n == 'adc1_min':
+                adc1_min = struct[n].get('value')
+            if n == 'adc1_max':
+                adc1_max = struct[n].get('value')
+        if adc1_min is not None and adc1_max is not None:
+            self.adc1_ring.setMinMax(int(adc1_min), int(adc1_max))
+            self.adc1_ring.repaint()
+
+    # manage the incoming serial-json values 
+    def updateStatusJson(self, streamDict):
+        if streamDict.get('vbus'):
+            f = round(streamDict['vbus'], 1)
+            self.vbusText.setText('Vbus:\n{0}'.format(f))
+
+        if streamDict.get('iq') and streamDict.get('id'):
+            f = math.sqrt((streamDict['iq'] * streamDict['iq']) + (streamDict['id'] * streamDict['id']))
+            f = round(f, 1)
+            self.phaseAText.setText('PhaseA:\n{0}'.format(f))
+
+        if streamDict.get('ehz'):
+            self.ehzText.setText('eHz:\n{0}'.format(round(streamDict['ehz'], 1)))
+        if streamDict.get('TMOS'):
+            self.tmosText.setText('TMOS:\n{0}'.format(round(streamDict['TMOS'], 1)))
+        if streamDict.get('TMOT'):
+            self.tmotText.setText('TMOT:\n{0}'.format(round(streamDict['TMOT'], 1)))
+        if streamDict.get('adc1') is not None:
+            self.adc1_ring.value = streamDict['adc1']
+            self.adc1_ring.repaint()
 
     def customButtonHoverEnter(self, event, message):
         self.prevStatusText = self.statusText.text()

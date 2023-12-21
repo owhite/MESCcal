@@ -16,6 +16,8 @@ class drawThermo(QWidget):
         self.setWindowTitle('Thermometer')
         self.offset = 10
         self.scale_height = 224
+        app_name = "Thermometer"
+        app_desc = "Simple thermometer example"
 
         vbox = QVBoxLayout()
         self.slider = QSlider(QtCore.Qt.Vertical, self)
@@ -25,9 +27,8 @@ class drawThermo(QWidget):
         self.setLayout(vbox)
 
     def receive_data(self, d):
-        if d.get('TMOS'):
-            self.value = float(d['TMOS']) - 273.15
-            self.repaint()
+        self.value = float(d['TMOS']) - 273.15
+        self.repaint()
 
     def changeVal(self):
         print("slider bar inactive") 

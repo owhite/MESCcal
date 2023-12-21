@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys, re, math, json
-import Payload, mescalineModuleLoad, FirstTab, StatusBar, appsTab, aboutTab, ColorSegmentRing
+import Payload, mescalineModuleLoad, FirstTab, StatusBar, appsTab, aboutTab, howtoTab, presetsTab, ColorSegmentRing
 import importlib.util
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -37,7 +37,7 @@ class Mescaline(QtWidgets.QMainWindow):
 
         ### Window ### 
         self.setMinimumWidth(800)
-        self.setMinimumHeight(300)
+        self.setMinimumHeight(800)
 
         ### Serial stuff ###
         self.port = QSerialPort()
@@ -62,12 +62,22 @@ class Mescaline(QtWidgets.QMainWindow):
         self.tabs = self.makeTabs(self.tab_data)
 
         ### Get a list of apps available for spawning ###
+        self.module_directory = './APPS'
         self.loadModules = mescalineModuleLoad.loadModules(self)
-        self.classes_found = self.loadModules.testWithAST(self.module_directory)
+        self.modules_dict = self.loadModules.testWithAST(self.module_directory)
+        self.classes_found = self.modules_dict['dict']
 
         ### Tab to view the apps ###
         self.appsTab = appsTab.appsTab(self)
         self.tabWidget.addTab(self.appsTab,"Apps")
+
+        ### Presets to make user happy
+        self.presetsTab = presetsTab.presetsTab(self)
+        self.tabWidget.addTab(self.presetsTab,"Presets")
+
+        ### Acknowledgements and user information ###
+        self.howtoTab = howtoTab.howtoTab(self)
+        self.tabWidget.addTab(self.howtoTab,"How to")
 
         ### Acknowledgements and user information ###
         self.aboutTab = aboutTab.aboutTab(self)
@@ -82,6 +92,8 @@ class Mescaline(QtWidgets.QMainWindow):
                 w = self.loadModules.windowPointers[n]
                 if hasattr(w, 'receive_data'):
                     w.receive_data(d)
+                if hasattr(w, 'set_port'):
+                    w.set_port(self.port)
 
     ### Render tabs described in json config file ###
     def makeTabs(self, json_specs):
@@ -117,29 +129,10 @@ class Mescaline(QtWidgets.QMainWindow):
                     pass
                 if self.streamDict.get('vbus'):
                     # print("STATUS: {0}".format(self.streamDict))
-                    self.updateStatusJson(self.streamDict) 
+                    self.statusBar.updateStatusJson(self.streamDict)
                 self.sendDataToApps(self.streamDict)
             except json.JSONDecodeError as e:
                 print("Getting bad json: {0}".format(row))
-
-
-    # send the serial-json values to the status bar
-    def updateStatusJson(self, streamDict):
-        if streamDict.get('vbus'):
-            f = round(streamDict['vbus'], 1)
-            self.statusBar.vbusText.setText('Vbus:\n{0}'.format(f))
-
-        if streamDict.get('iq') and streamDict.get('id'):
-            f = math.sqrt((streamDict['iq'] * streamDict['iq']) + (streamDict['id'] * streamDict['id']))
-            f = round(f, 1)
-            self.statusBar.phaseAText.setText('PhaseA:\n{0}'.format(f))
-
-        if streamDict.get('ehz'):
-            self.statusBar.ehzText.setText('eHz:\n{0}'.format(round(streamDict['ehz'], 1)))
-        if streamDict.get('TMOS'):
-            self.statusBar.tmosText.setText('TMOS:\n{0}'.format(round(streamDict['TMOS'], 1)))
-        if streamDict.get('TMOT'):
-            self.statusBar.tmotText.setText('TMOT:\n{0}'.format(round(streamDict['TMOT'], 1)))
 
     # a lot of the tabs have values loaded from the mesc payload
     #  this handles updating those values
@@ -152,6 +145,8 @@ class Mescaline(QtWidgets.QMainWindow):
                 for tab in self.tabs:
                     tab.updateValues(p)
 
+            self.statusBar.updateStatusPayload(p)
+        
         self.serialPayload.resetString()
 
     # a timer that checks if anything has recently been transmitted
@@ -175,6 +170,39 @@ class Mescaline(QtWidgets.QMainWindow):
         else:
             self.statusBar.serialButtonOn()
                 
+    def dataEntryButtonClicked(self, name, entryItem):
+        if isinstance(entryItem, QtWidgets.QLineEdit):
+            n = entryItem.text()
+        if isinstance(entryItem, QtWidgets.QComboBox):
+            n = entryItem.currentIndex() - 1
+            if entryItem.currentIndex() == 0:
+                self.statusBar.statusText.setText("no change, dont select \"none\"")
+                return()
+
+        if not self.port.isOpen():
+            self.statusBar.statusText.setText('Port closed: cant update')
+        else:
+            if self.isIntOrFloat(n):
+                text = 'set {0} {1}'.format(name, n)
+                self.statusBar.statusText.setText(text)
+                text = text + '\r\n'
+                self.port.write( text.encode() )
+            else:
+                self.statusBar.statusText.setText('{0} not number'.format(n))
+
+
+    def isIntOrFloat(self, s):
+        try:
+            int_value = int(s)
+            return True
+        except ValueError:
+            try:
+                float_value = float(s)
+                return True
+            except ValueError:
+                return False
+
+
 ### Creates a tab that is described in json config file
 ### 
 class createTab(QtWidgets.QMainWindow): 
@@ -186,6 +214,7 @@ class createTab(QtWidgets.QMainWindow):
         self.tab_title = self.tab_dict['title']
         self.port = parent.port
         self.statusText = parent.statusBar.statusText
+        self.dataEntryButtonClicked = parent.dataEntryButtonClicked
         self.initUI()
 
     def initUI(self):
@@ -255,37 +284,6 @@ class createTab(QtWidgets.QMainWindow):
 
         row_layout.setAlignment(QtCore.Qt.AlignLeft)
         return(row_layout)
-
-    def isIntOrFloat(self, s):
-        try:
-            int_value = int(s)
-            return True
-        except ValueError:
-            try:
-                float_value = float(s)
-                return True
-            except ValueError:
-                return False
-
-    def dataEntryButtonClicked(self, name, entryItem):
-        if isinstance(entryItem, QtWidgets.QLineEdit):
-            n = entryItem.text()
-        if isinstance(entryItem, QtWidgets.QComboBox):
-            n = entryItem.currentIndex() - 1
-            if entryItem.currentIndex() == 0:
-                self.statusText.setText("no change, dont select \"none\"")
-                return()
-
-        if not self.port.isOpen():
-            self.statusText.setText('Port closed: cant update')
-        else:
-            if self.isIntOrFloat(n):
-                text = 'set {0} {1}'.format(name, n)
-                self.statusText.setText(text)
-                text = text + '\r\n'
-                self.port.write( text.encode() )
-            else:
-                self.statusText.setText('{0} not number'.format(n))
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)

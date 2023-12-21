@@ -19,6 +19,8 @@ class showData(QWidget):
         self.labelKeys = ['new']
         self.labelNames = ['streaming window']
         self.createLabels()
+        app_name = "Show data"
+        app_desc = "Simple display of mesc values"
 
         self.setLayout(self.layout)
         self.setGeometry(200, 200, 400, 200)
@@ -45,22 +47,19 @@ class showData(QWidget):
             self.layout.addWidget(self.labelPtrs[i])
 
 
-    #  so usually this gets data of the form: {'adc1': 0, 'ehz': 0.051 ....
-    #    display that if you get it
     def receive_data(self, d):
-        if d.get('vbus'): # bad test if we're getting status data
-            self.new_list = sorted(list(d.keys()))
-            if self.labelKeys != self.new_list:
-                self.removeLabels()
+        self.new_list = sorted(list(d.keys()))
+        if self.labelKeys != self.new_list:
+            self.removeLabels()
 
-                self.labelKeys = []
-                self.labelNames = []
-                for n in self.new_list:
-                    self.labelKeys.append(n)
-                    self.labelNames.append(d[n])
-                self.createLabels()
-            else:
-                self.updateLabels(d)
+            self.labelKeys = []
+            self.labelNames = []
+            for n in self.new_list:
+                self.labelKeys.append(n)
+                self.labelNames.append(d[n])
+            self.createLabels()
+        else:
+            self.updateLabels(d)
 
 if __name__ == '__main__':
     # For testing purposes

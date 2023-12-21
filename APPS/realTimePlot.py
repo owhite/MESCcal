@@ -18,7 +18,6 @@ class realTimePlot(QWidget):
         self.setWindowTitle('Baby Plotting Example')
 
         self.layout = QVBoxLayout()
-        self.port = None
 
         # Create Matplotlib figure and axis
         self.figure, self.axes = plt.subplots(2, 1, sharex=True)
@@ -37,22 +36,14 @@ class realTimePlot(QWidget):
         self.axes[1].set_title('TMOT')
 
         self.layout.addWidget(self.canvas)
+
         self.setLayout(self.layout)
 
-    #  so usually this gets data of the form: {'adc1': 0, 'ehz': 0.051 ....
-    #    display that if you get it
     def receive_data(self, d):
-        if d.get('vbus'): # bad test if we're getting status data
-            p_y1 = float(d['vbus'])
-            p_y2 = float(d['TMOS']) - 273.15
-            self.update_plot(p_y1, p_y2)
-
-    def send_command(self, c):
-        text = 'get\r\n'
-        self.port.write( text.encode() )
-
-    def set_port(self, p):
-        self.port = p
+        p_y1 = float(d['vbus'])
+        p_y2 = float(d['TMOS']) - 273.15
+        # print("plot: {0} :: {1}".format(p_y1, p_y2))
+        self.update_plot(p_y1, p_y2)
 
     def update_plot(self, y1, y2):
         # Shift existing data to the left

@@ -229,12 +229,14 @@ class SerialSendView(QtWidgets.QWidget):
 
     def onReturnPressed(self):
         text = self.sendData.text()
+        print(f'You typed: {text}')
         text = text + '\r\n'
         self.port.write( text.encode() )
         self.sendData.clear()
 
     def sendButtonClicked(self):
         text = self.sendData.text()
+        print(f'You typed: {text}')
         text = text + '\r\n'
         self.port.write( text.encode() )
         self.sendData.clear()

@@ -1,42 +1,55 @@
 #!/usr/bin/env python3
 
-import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTextBrowser, QVBoxLayout, QWidget
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtCore import Qt, QUrl
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QGroupBox, QRadioButton, QLabel
+from PyQt5.QtGui import QFont  # Import QFont from QtGui
 
-class TextDisplayWindow(QMainWindow):
+class ExampleWidget(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle('Text Display Example')
+        self.init_ui()
 
-        # Create a QTextBrowser with a clickable link
-        text = """
-        This is an example of a hotlink. Click <a href="http://www.google.com">here</a> to open the website in your browser.
-        """
-
-        self.text_browser = QTextBrowser()
-        self.text_browser.setOpenExternalLinks(True)
-        self.text_browser.setHtml(text)
-        self.text_browser.anchorClicked.connect(self.open_link)
-
-        # Set up the layout
+    def init_ui(self):
         layout = QVBoxLayout()
-        layout.addWidget(self.text_browser)
 
-        central_widget = QWidget()
-        central_widget.setLayout(layout)
-        self.setCentralWidget(central_widget)
+        # Create the first group box
+        group_box1 = QGroupBox('Group Box 1')
 
-    def open_link(self, link):
-        # Open the link in the user's default web browser
-        QDesktopServices.openUrl(QUrl(link.toString()))
+        # Set a larger font size for the text in 'Group Box 1'
+        font = QFont()
+        font.setPointSize(10)  # Change the font size as needed
+        group_box1.setFont(font)
+
+        # Create the QVBoxLayout to contain radio buttons and labels
+        combined_layout = QVBoxLayout()
+
+        # Create the first QVBoxLayout for radio buttons
+        layout1 = QVBoxLayout()
+        for i in range(5):
+            radio_button = QRadioButton(f'Radio {i+1}')
+            layout1.addWidget(radio_button)
+
+        # Create the second QVBoxLayout for labels
+        layout2 = QVBoxLayout()
+        for i in range(5):
+            label = QLabel(f'Label {i+1}')
+            layout2.addWidget(label)
+
+        # Add layout1 and layout2 to the combined layout
+        combined_layout.addLayout(layout1)
+        combined_layout.addLayout(layout2)
+
+        # Set the combined layout as the layout for group_box1
+        group_box1.setLayout(combined_layout)
+
+        # Add group_box1 to the main layout
+        layout.addWidget(group_box1)
+
+        # Set the main layout for the main window
+        self.setLayout(layout)
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-
-    main_window = TextDisplayWindow()
-    main_window.show()
-
-    sys.exit(app.exec_())
+    app = QApplication([])
+    window = ExampleWidget()
+    window.show()
+    app.exec_()

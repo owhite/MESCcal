@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QTextEdit
-from PyQt5.QtGui import QPainter, QPen, QColor
+from PyQt5.QtGui import QPainter, QPen, QColor, QFont
 from PyQt5.QtCore import Qt, QRectF, QSize
 
 class colorSegmentRing(QWidget):
@@ -8,8 +8,14 @@ class colorSegmentRing(QWidget):
         super().__init__()
         self.value_min = 400
         self.value_max = 2200
-        self.value_total = 3200
-        self.value = 2000
+        self.value_total = 3900
+        self.value = 8
+        self.ring_text = ''
+        self.ring_text_size = 10
+
+    def setMinMax(self, min, max):
+        self.value_min = min
+        self.value_max = max
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -92,11 +98,17 @@ class colorSegmentRing(QWidget):
         pen.setWidth(1)
         painter.setPen(pen)
 
-        extent = ((self.value_total - 700) / self.value_total) * arc_length
+        # extent = ((self.value_total - self.value) / self.value_total) * arc_length
+        extent = ((self.value) / self.value_total) * arc_length
 
         start_angle =  -90 - ((360 - arc_length) / 2) + 5
         painter.setBrush(color)
         painter.drawPie(center_rect, int(start_angle * 16), int(extent * -16))
+        
+        label_font = QFont("Arial", self.ring_text_size)  # Set the desired font and size
+        painter.setFont(label_font)
+        label_rect = QRectF(center_rect.left(), center_rect.bottom() - 6, center_rect.width(), 20) 
+        painter.drawText(label_rect, Qt.AlignCenter, self.ring_text)
 
     def sizeHint(self):
         return self.minimumSizeHint()
@@ -104,24 +116,3 @@ class colorSegmentRing(QWidget):
     def minimumSizeHint(self):
         return QSize(60, 60)  
         
-def main():
-    app = QApplication(sys.argv)
-    main_window = QMainWindow()
-    main_window.setGeometry(100, 100, 800, 800)
-
-    central_text_edit = QTextEdit()
-    central_text_edit.setPlainText("This is a block of text.\nYou can add more text here.")
-
-    main_window.setCentralWidget(central_text_edit)
-
-    status_bar = main_window.statusBar()
-    status_bar.setSizeGripEnabled(False)
-
-    status_bar_widget = ColorSegmentRing()
-    status_bar.addPermanentWidget(status_bar_widget, 1)
-
-    main_window.show()
-    sys.exit(app.exec_())
-    
-if __name__ == "__main__":
-    main()

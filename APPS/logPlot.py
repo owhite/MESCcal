@@ -23,6 +23,8 @@ class logPlot(QMainWindow):
 
         self.canvas = MatplotlibCanvas(self, width=5, height=4)
         self.layout.addWidget(self.canvas)
+        app_name = "FL log"
+        app_desc = "data from the fast loop"
 
         self.button = QPushButton("Update Plot", self)
         # self.button.clicked.connect(self.canvas.update_plot)

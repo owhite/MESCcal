@@ -17,7 +17,6 @@ from PyQt5.QtCore import Qt, QTimer
 class loadModules(QtWidgets.QMainWindow):
     def __init__(self, parent):
         super().__init__(parent)
-        self.port = parent.port
         self.classNames = [] # contains all known classes
         self.windowPointers = {} # contains only the windows that are loaded
         self.windowNames = [] # contains names of the windows that are loaded
@@ -50,13 +49,7 @@ class loadModules(QtWidgets.QMainWindow):
                     # Instantiate the window class and show it
                     module_class = getattr(loaded_module, full_module_name)
                     self.window_instance = module_class()
-
-                    if hasattr(self.window_instance, 'show'):
-                        self.window_instance.show()
-
-                    if hasattr(self.window_instance, 'set_port'):
-                        self.window_instance.set_port(self.port)
-
+                    self.window_instance.show()
                     if full_module_name not in self.windowNames:
                         self.windowNames.append(full_module_name)
                         self.windowPointers[full_module_name] = self.window_instance
@@ -97,6 +90,7 @@ class loadModules(QtWidgets.QMainWindow):
         python_files = [f for f in os.listdir(directory) if f.endswith('.py')]
 
         returnDict = {}
+        _d = {}
         for name in python_files:
             file_path = directory + '/' + name
             name = name.replace('.py', '')
@@ -104,14 +98,30 @@ class loadModules(QtWidgets.QMainWindow):
             with open(file_path, 'r') as file:
                 tree = ast.parse(file.read(), filename=file_path)
 
-            class_names = []
+            l = []
+            app_name = None
+            app_desc = None
             for node in ast.walk(tree):
                 if isinstance(node, ast.ClassDef):
-                    class_names.append(node.name)
+                    l.append(node.name)
+                if isinstance(node, ast.Assign):
+                    for target in node.targets:
+                        if isinstance(target, ast.Name) and target.id == 'app_name':
+                            app_name = node.value.value
+
+                        if isinstance(target, ast.Name) and target.id == 'app_desc':
+                            app_desc = node.value.value
 
             # this wins the "painful lack of testing" award
-            if "MescalineSafe" in class_names and name in class_names:
-                returnDict[name] = file_path
+            if "MescalineSafe" in l and name in l:
+                _d[name] = file_path
+                returnDict[name] = {}
+                if app_name:
+                    returnDict[name]['app_name'] = app_name
+                if app_desc:
+                    returnDict[name]['app_desc'] = app_desc
+
+        returnDict['dict'] = _d
 
         return(returnDict)
 
