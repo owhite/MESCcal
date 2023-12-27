@@ -16,7 +16,6 @@ class FirstTab(QtWidgets.QMainWindow):
         self.getButton = parent.statusBar.getButton
         self.saveButton = parent.statusBar.saveButton
         self.tButton = parent.statusBar.getButton
-        self.serialStreamingOn = parent.serialStreamingOn
         self.serialPayload = parent.serialPayload
         self.port_substring = parent.port_substring
         self.max_chars = 3000
@@ -68,7 +67,7 @@ class FirstTab(QtWidgets.QMainWindow):
             r = self.port.open(QtCore.QIODevice.ReadWrite)
             if not r:
                 # this does not test if it is already open and happy. 
-                print ( self.toolBar.portName() )
+                # print ( self.toolBar.portName() )
                 self.statusText.setText('Port open: error')
                 self.toolBar.portOpenButton.setChecked(False)
                 # self.toolBar.serialControlEnable(True)
@@ -118,19 +117,23 @@ class FirstTab(QtWidgets.QMainWindow):
 
         if len(text_inside_braces) > 0:
             t = text_inside_braces.replace('\r', '')
-            self.jsonDataView.appendJsonText(t, QtGui.QColor(0, 0, 0) )
+            self.jsonDataView.appendJsonText(t, QtGui.QColor(250, 250, 250) )
             self.parent.updateJsonData(t)
             self.serialPayload.resetTimer() 
 
         # hoping this means we have a complete command block
         if remaining_text.endswith("@MESC>"):
-            self.serialDataView.appendSerialText( remaining_text, QtGui.QColor(0, 0, 0) )
+            self.serialDataView.appendSerialText( remaining_text, QtGui.QColor(250, 250, 250) )
             self.parent.updateTabs()
+            # print("\nstring LEN1: :: {0} :: ".format(self.serialPayload.reportString()))
+            self.serialPayload.resetString()
+            # print("string LEN2: :: {0} :: ".format(len(self.serialPayload.reportString())))
+            r = ''
+            data = ''
+            remaining_text = ''
             
         self.serialPayload.setString(remaining_text)
-
-        # Last thing. bump the timer that serial data was received
-
+        
     def sendFromPort(self, text):
         text = text + '\r\n'
         self.serialPayload.resetString()

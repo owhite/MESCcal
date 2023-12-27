@@ -22,6 +22,7 @@ class createStatusBar(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.parent = parent
         self.setStatusBar = parent.setStatusBar
+        self.serialStreamingOn = False
         self.statusBar = parent.statusBar
         self.port = parent.port
         self.os = parent.os
@@ -43,20 +44,20 @@ class createStatusBar(QtWidgets.QMainWindow):
 
         # Create buttons
         self.getButton = CapsuleButton(self, "Get")
-        self.getButton.setStyleSheet("background-color : yellow;" "border :1px solid black;") 
+        self.getButton.setStyleSheet("background-color :  #F39C12;" "border :1px solid black;") 
         self.getButton.clicked.connect(self.getSerialData)
-        self.getButton.enterEvent = lambda event: self.customButtonHoverEnter(event, "Get: retreive values from MESC, load into tabs")
+        self.getButton.enterEvent = lambda event: self.customButtonHoverEnter(event, "Get: retreive values from MESC for tabs")
         self.getButton.leaveEvent = self.customButtonHoverLeave
         QTimer.singleShot(100, lambda: self.getButton.enterEvent(None)) # does a little refresh that helps
 
         self.saveButton = CapsuleButton(self, "Set")
-        self.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid black;") 
+        self.saveButton.setStyleSheet("background-color :  #F39C12;" "border :1px solid black;") 
         self.saveButton.enterEvent = lambda event: self.customButtonHoverEnter(event, "Save: store all values in MESC")
         self.saveButton.leaveEvent = self.customButtonHoverLeave
         self.saveButton.clicked.connect(self.saveSerialData)
 
         self.streamButton = CapsuleButton(self, "Data")
-        self.streamButton.setStyleSheet("background-color : white;" "border :1px solid black;") 
+        self.streamButton.setStyleSheet("background-color : #F39C12;" "border :1px solid black;") 
         self.streamButton.clicked.connect(self.getSerialStream)
         self.streamButton.enterEvent = lambda event: self.customButtonHoverEnter(event, "Data: toggles data streaming from MESC")
         self.streamButton.leaveEvent = self.customButtonHoverLeave
@@ -75,6 +76,7 @@ class createStatusBar(QtWidgets.QMainWindow):
         self.tmosText = QtWidgets.QLabel('TMOS:\n  ')
         self.tmotText = QtWidgets.QLabel('TMOT:\n  ')
         self.ehzText = QtWidgets.QLabel('eHz:\n  ')
+        self.errorText = QtWidgets.QLabel('Error:\n  ')
 
         self.adc1_ring = ColorSegmentRing.colorSegmentRing()
         self.adc1_ring.setVisible(True)
@@ -88,6 +90,7 @@ class createStatusBar(QtWidgets.QMainWindow):
         h1.addWidget(self.tmosText)
         h1.addWidget(self.tmotText)
         h1.addWidget(self.ehzText)
+        h1.addWidget(self.errorText)
         h1.addWidget(self.adc1_ring)
 
         # h1.addWidget(self.winOpenButton)
@@ -111,7 +114,7 @@ class createStatusBar(QtWidgets.QMainWindow):
 
     # manage the incoming serial-json values 
     def updateStatusJson(self, streamDict):
-        if streamDict.get('vbus'):
+        if streamDict.get('vbus') is not None:
             f = round(streamDict['vbus'], 1)
             self.vbusText.setText('Vbus:\n{0}'.format(f))
 
@@ -120,12 +123,14 @@ class createStatusBar(QtWidgets.QMainWindow):
             f = round(f, 1)
             self.phaseAText.setText('PhaseA:\n{0}'.format(f))
 
-        if streamDict.get('ehz'):
+        if streamDict.get('ehz') is not None:
             self.ehzText.setText('eHz:\n{0}'.format(round(streamDict['ehz'], 1)))
-        if streamDict.get('TMOS'):
+        if streamDict.get('TMOS') is not None:
             self.tmosText.setText('TMOS:\n{0}'.format(round(streamDict['TMOS'], 1)))
-        if streamDict.get('TMOT'):
+        if streamDict.get('TMOT') is not None:
             self.tmotText.setText('TMOT:\n{0}'.format(round(streamDict['TMOT'], 1)))
+        if streamDict.get('error') is not None:
+            self.errorText.setText('error:\n{0}'.format(streamDict['error']))
         if streamDict.get('adc1') is not None:
             self.adc1_ring.value = streamDict['adc1']
             self.adc1_ring.repaint()
@@ -140,7 +145,7 @@ class createStatusBar(QtWidgets.QMainWindow):
         self.statusText.setText('Status msgs here')
 
     def serialButtonOff(self):
-        self.streamButton.setStyleSheet("background-color : white;" "border :2px solid black;") 
+        self.streamButton.setStyleSheet("background-color : #F39C12;" "border :2px solid black;") 
         self.streamButton.setChecked(True)
         self.serialStreamingOn = False
 

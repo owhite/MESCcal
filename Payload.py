@@ -103,4 +103,7 @@ class Payload:
 
     def reportPayload(self):
         """return payload structure"""
-        return(self._struct)
+        # notice this clears the struct
+        tmp = self._struct
+        self._struct = {}
+        return(tmp)

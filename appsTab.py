@@ -53,7 +53,7 @@ class appsTab(QtWidgets.QMainWindow):
 
             pb = QtWidgets.QPushButton('GO')
             pb.setFixedWidth(40)
-            pb.setStyleSheet("background-color : white;" "border :1px solid black;")
+            # pb.setStyleSheet("background-color : white;" "border :1px solid black;")
             pb.setCheckable(True)
             pb.clicked.connect(partial(self.on_button_clicked, name))
 
@@ -71,7 +71,7 @@ class appsTab(QtWidgets.QMainWindow):
 
             app_name = " :: " + app_name
             label1 = QtWidgets.QLabel(app_name) 
-            label1.setFixedWidth(100)
+            label1.setFixedWidth(140)
             row_layout.addWidget(label1)
 
             label2 = QtWidgets.QLabel(app_desc)
@@ -86,8 +86,6 @@ class appsTab(QtWidgets.QMainWindow):
 
     def on_button_clicked(self, name):
         sender_button = self.sender()
-        print(name)
-        print(self.modules_dict['dict'])
 
         if sender_button.isChecked():
             self.loadModules([self.modules_dict['dict'][name]])
@@ -101,10 +99,10 @@ class appsTab(QtWidgets.QMainWindow):
         for name in self.classes_found.keys():
             pb = self.buttons[name]
             if name in self.windowNames:
-                pb.setStyleSheet("background-color : lightblue;" "border :1px solid black;")
+                # pb.setStyleSheet("background-color : lightblue;" "border :1px solid black;")
                 pb.setChecked(True)
             else:
-                pb.setStyleSheet("background-color : white;" "border :1px solid black;")
+                # pb.setStyleSheet("background-color : white;" "border :1px solid black;")
                 pb.setChecked(False)
 
     # To do, perform a refresh on the list of available apps

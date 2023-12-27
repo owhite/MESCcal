@@ -90,7 +90,7 @@ class colorSegmentRing(QWidget):
         center_rect = QRectF((self.width() - rect_size + bump) // 2, (self.height() - rect_size + bump) // 2, rect_size - bump, rect_size - bump)
 
         # Add another pie slice shape in the center
-        color = QColor(Qt.black)
+        color = QColor(Qt.white)
         if self.value > self.value_max:
             color = QColor(Qt.red)
 
@@ -108,6 +108,8 @@ class colorSegmentRing(QWidget):
         label_font = QFont("Arial", self.ring_text_size)  # Set the desired font and size
         painter.setFont(label_font)
         label_rect = QRectF(center_rect.left(), center_rect.bottom() - 6, center_rect.width(), 20) 
+        font_color = QColor(255, 255, 255) 
+        painter.setPen(font_color)
         painter.drawText(label_rect, Qt.AlignCenter, self.ring_text)
 
     def sizeHint(self):

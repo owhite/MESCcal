@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
+import qdarkgraystyle
+
 import sys, re, math, json, platform
-import Payload, mescalineModuleLoad, FirstTab, StatusBar, appsTab, aboutTab, howtoTab, presetsTab, ColorSegmentRing
+import Payload, mescalineModuleLoad, FirstTab, StatusBar, appsTab
+import aboutTab, howtoTab, presetsTab, ColorSegmentRing
 import importlib.util
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -60,6 +63,7 @@ class Mescaline(QtWidgets.QMainWindow):
         self.serialWasOn = False
         self.serialPayload = Payload.Payload()
         self.serialPayload.startTimer()
+        self.serialStreamingOn = False
 
         ### Status Bar ###
         self.statusBar = StatusBar.createStatusBar(self)
@@ -86,6 +90,7 @@ class Mescaline(QtWidgets.QMainWindow):
         ### Presets to make user happy
         self.presetsTab = presetsTab.presetsTab(self)
         self.tabWidget.addTab(self.presetsTab,"Presets")
+        self.tabs.append(self.presetsTab) # this guy gets updates so add to list
 
         ### Acknowledgements and user information ###
         self.howtoTab = howtoTab.howtoTab(self)
@@ -95,7 +100,7 @@ class Mescaline(QtWidgets.QMainWindow):
 
         ### Acknowledgements and user information ###
         self.aboutTab = aboutTab.aboutTab(self)
-        self.tabWidget.addTab(self.aboutTab,self.os)
+        self.tabWidget.addTab(self.aboutTab,"About")
 
         self.setWindowTitle("mescaline ({0})".format(self.os))
         self.setCentralWidget(self.tabWidget)
@@ -132,7 +137,9 @@ class Mescaline(QtWidgets.QMainWindow):
                     w.close()
         event.accept()
 
-    # things to do when a new serial-json string comes in
+    # things to do when a new serial-json string comes in.
+    #  this feeds the results from json to the status bar
+    #  and the apps
     def updateJsonData(self, str):
         str = str.rstrip('\n')
         d = {}
@@ -143,6 +150,7 @@ class Mescaline(QtWidgets.QMainWindow):
                 if self.streamDict.get('time'):
                     # print("LOG: {0}".format(self.streamDict))
                     pass
+                self.presetsTab.jsonStreaming = False
                 if self.streamDict.get('vbus'):
                     # print("STATUS: {0}".format(self.streamDict))
                     self.statusBar.updateStatusJson(self.streamDict)
@@ -150,20 +158,21 @@ class Mescaline(QtWidgets.QMainWindow):
             except json.JSONDecodeError as e:
                 print("Getting bad json: {0}".format(row))
 
-    # a lot of the tabs have values loaded from the mesc payload
-    #  this handles updating those values
+    # things to do when NON json data comes in
+    #  theres a lot of tabs that show data, update those tabs
+    #  this is selective, some strings that come in are
+    #  ignored for now
     def updateTabs(self):
         if len(self.serialPayload.reportString()) > 0:
             self.serialPayload.parsePayload()
             p = self.serialPayload.reportPayload()
+            # print("names: {0}".format(p['names']))
             # update tabs if the payload has anything, 
             if p is not None and len(p['names']) > 0:
                 for tab in self.tabs:
                     tab.updateValues(p)
 
             self.statusBar.updateStatusPayload(p)
-        
-        self.serialPayload.resetString()
 
     # a timer that checks if anything has recently been transmitted
     #  and changes colors of the buttons
@@ -175,8 +184,8 @@ class Mescaline(QtWidgets.QMainWindow):
             self.statusBar.saveButton.setStyleSheet("background-color : #009900;" "border :1px solid green;") 
             self.serialWasOn = True
         else:
-            self.statusBar.getButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
-            self.statusBar.saveButton.setStyleSheet("background-color : yellow;" "border :1px solid yellow;") 
+            self.statusBar.getButton.setStyleSheet("background-color :  #F39C12;" "border :1px solid green;") 
+            self.statusBar.saveButton.setStyleSheet("background-color :  #F39C12;" "border :1px solid green;") 
             if self.serialWasOn:
                 self.statusBar.statusText.setText('Port died')
 
@@ -222,6 +231,8 @@ class Mescaline(QtWidgets.QMainWindow):
         current_tab_name = self.tabWidget.tabText(index)
         if current_tab_name == 'Presets':
             self.presetsTab.updateThisTab()
+        if current_tab_name == 'About':
+            self.aboutTab.updateThisTab()
 
 
 ### Creates a tab that is described in json config file
@@ -308,6 +319,8 @@ class createTab(QtWidgets.QMainWindow):
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
+    app.setStyleSheet(qdarkgraystyle.load_stylesheet())
+
     window = Mescaline()
     window.show()
     app.exec()

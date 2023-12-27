@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider, QStyleFactory
 
 class MescalineSafe:
     # ha ha
@@ -8,6 +8,7 @@ class MescalineSafe:
 class drawThermo(QWidget):
     def __init__(self):
         super().__init__()
+        self.setStyleSheet("")
         self.initUI()
 
     def initUI(self):
@@ -31,7 +32,8 @@ class drawThermo(QWidget):
         self.repaint()
 
     def changeVal(self):
-        print("slider bar inactive") 
+        pass
+        # print("slider bar inactive") 
 
     def paintEvent(self, event):
         painter = QtGui.QPainter()
@@ -75,10 +77,11 @@ class drawThermo(QWidget):
         linearGrad.setColorAt(0.0, QtGui.QColor(255, 255, 255, 0))
 
         painter.setBrush(QtGui.QBrush(linearGrad))
-        painter.setPen(QtCore.Qt.black)
+        painter.setPen(QtCore.Qt.white)
         painter.drawPath(path)
 
         pen = QtGui.QPen()
+        pen.setColor(QtGui.QColor(255, 255, 255)) 
         length = 12
 
         for i in range(33):
@@ -94,6 +97,7 @@ class drawThermo(QWidget):
                 pen.setWidthF(0.6)
 
             painter.setPen(pen)
+            pen.setColor(QtGui.QColor(255, 255, 255)) 
             painter.drawLine(-7, 28 + i * 7, -7 + length, 28 + i * 7)
 
         for i in range(9):
@@ -133,7 +137,7 @@ class drawThermo(QWidget):
         temp = self.scale_height * factor
         height = temp + self.offset
 
-        painter.setPen(QtCore.Qt.NoPen)
+        painter.setPen(QtCore.Qt.white)
         painter.setBrush(scale)
         # QRectF uses floating-point values
         painter.drawRect(QtCore.QRectF(-5.0, 252 + self.offset - height, 10.0, height))  
