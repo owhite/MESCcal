@@ -35,10 +35,10 @@ class aboutDialog(QDialog):
 
         text = """
         <div style="text-align: left;">
-        <H2 style="text-align:center;">mescaline</H2>
+        <H2 style="text-align:center;">MESCcal: the MESC calibration tool</H2>
         <H3></H3>
         <br>
-        mescaline is a companion tool for the 
+        MESCcal is a calibration tool for the 
         <a href="https://github.com/davidmolony/MESC_Firmware" style="color: #F39C12;">MESC_firmware 
         project</a> written by David Molony; many thanks to him for 
         his patience and help with the MESC code. 
@@ -49,7 +49,7 @@ class aboutDialog(QDialog):
         of the MESC_Firmware serial terminal. 
         <br>
         <br>
-        An instructional video on the use of mescaline can be found here: 
+        An instructional video on the use of MESCcal can be found here: 
         [<a href="https://youtu.be/dQw4w9WgXcQ?t=43" style="color: #F39C12;">LINK</a>].
         <br>
         <br>
@@ -69,7 +69,7 @@ class aboutDialog(QDialog):
         vbox.addWidget(close_button)
 
         self.setLayout(vbox)
-        self.setWindowTitle('About mescaline')
+        self.setWindowTitle('About MESCcal')
         self.setGeometry(180, 300, 460, 350)
 
         # Connect the open_link method to the anchorClicked signal
