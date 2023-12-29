@@ -113,7 +113,7 @@ class loadModules(QtWidgets.QMainWindow):
                             app_desc = node.value.value
 
             # this wins the "painful lack of testing" award
-            if "MescalineSafe" in l and name in l:
+            if "MESCcalSafe" in l and name in l:
                 _d[name] = file_path
                 returnDict[name] = {}
                 if app_name:

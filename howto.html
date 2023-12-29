@@ -12,13 +12,13 @@
 </ul>
 <BR>
 <h3 style="padding:0; margin:0">Debug serial port.</h3>
-The mescaline PYQT5 environment that does serial handling is very stable.&nbsp; If you're having trouble connecting it probably does not have to do with mescaline.&nbsp; If you can't connect to the serial try:
+The MESCcal PYQT5 environment that does serial handling is very stable.&nbsp; If you're having trouble connecting it probably does not have to do with MESCcal.&nbsp; If you can't connect to the serial try:
 <ul style="padding:0; margin:0;">
 <li> Connecting the MESC board to your computer and THEN powering up the MESC board
 <li> Checking to see if your computer sees a new port 
 <li> Using a different terminal program (for Macs and Linux: screen,&nbsp;Windows: minicom)
 </ul>
-If you can't view the MESC board through your serial using another terminal program you are not likely to get it to work on mescaline either. 
+If you can't view the MESC board through your serial using another terminal program you are not likely to get it to work on MESCcal either. 
 <BR>
 <h3 style="padding:0; margin:0;">Send serial commands.</h3>
 <ul style="padding:0; margin:0;">
@@ -53,7 +53,7 @@ For example,&nbsp;to change the number of pole pairs:
 <li> MESC should report pole_pairs was changed in the text buffer of Port tab
 </ul>
 <br>
-<h3 style="padding:0; margin:0;">Change MESC settings using the mescaline interface.</h3>
+<h3 style="padding:0; margin:0;">Change MESC settings using the MESCcal interface.</h3>
 For example,&nbsp;to change the number of pole pairs:
 <ul style="padding:0; margin:0;">
 <li> First update all values by selecting "Get" in the toolbar
@@ -74,7 +74,7 @@ Changes that are made to settings are temporary,&nbsp;e.g.,&nbsp;if you reboot y
 </ul>
 <br>
 <h3 style="padding:0; margin:0;">Create a new app.</h3>
-You can create your own apps that are launched by mescaline if you know python and follow a few rules. 
+You can create your own apps that are launched by MESCcal if you know python and follow a few rules. 
 <ul style="padding:0; margin:0;">
 <li> The apps directory is specified in a configuration file,&nbsp;currently name "app_specs.json"
 <li> It is configured in the "module_directory" of that file
@@ -110,7 +110,7 @@ Connections and powering your motor are a bit out of scope but provided that's d
 </ul>
 <br>
 <h3 style="padding:0; margin:0;">Understand all the MESC commands.</h3>
-The mescaline interface is simply sending commands to the MESC firmware through the serial.&nbsp; The interface commands were written by <a href="https://github.com/Netzpfuscher" style="color: #F39C12;">Netzpfuscher</a> who is responsible for the MESC firmware serial terminal.&nbsp; You can try terminal commands yourself, &nbsp; (see:&nbsp; <i>Send serial commands</i>) or users are encouraged to try it using a terminal program (screen, for Macs and linux, or minicom for Windows).  In any case,&nbsp; the following is an incomplete list of MESC terminal commands:
+The MESCcal interface is simply sending commands to the MESC firmware through the serial.&nbsp; The interface commands were written by <a href="https://github.com/Netzpfuscher" style="color: #F39C12;">Netzpfuscher</a> who is responsible for the MESC firmware serial terminal.&nbsp; You can try terminal commands yourself, &nbsp; (see:&nbsp; <i>Send serial commands</i>) or users are encouraged to try it using a terminal program (screen, for Macs and linux, or minicom for Windows).  In any case,&nbsp; the following is an incomplete list of MESC terminal commands:
 <ul style="padding:0; margin:0;">
 <li> <b>get</b> <i>retreives all values from MESC</i>
 <li> <b>set pole_pairs 5</b> <i>sets the variable pole_pairs to 5,&nbsp;many other values can be set</i>
