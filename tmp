@@ -1,0 +1,16 @@
+Suppose I create a widget:
+        # Create a widget to hold the layout
+        self.layout_widget = QtWidgets.QWidget(self)
+
+And then I create a vertical layout:
+        # Create a vertical layout for the widget
+        layout = QtWidgets.QVBoxLayout(self.layout_widget)
+
+Two containers will be added to the vertical
+        container1 = QtWidgets.QWidget()
+        h1 = QtWidgets.QHBoxLayout(container1)
+        layout.addWidget(container1)
+
+        container2 = QtWidgets.QWidget()
+        h1 = QtWidgets.QHBoxLayout(container2)
+        layout.addWidget(container2)

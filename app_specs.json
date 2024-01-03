@@ -139,6 +139,53 @@
 	    ]
 	}
     },
+    "presets": [
+	{
+	    "title": "Run in open loop",
+	    "preface": "Running in open loop mode turns the motor with no feedback control.",
+	    "first_column": {
+		"widgets": [
+		    {"type": "checkbox", "name": "curr_max", "start": "40.0", "stop": "None", "desc": "(40 Amps, something safe)"},
+		    {"type": "checkbox", "name": "input_opt", "start": "8", "stop": "1", "desc": "(8 = UART,  meaning: receive control input from UART)"}, 
+		    {"type": "checkbox", "name": "motor_sensor", "start": "2", "stop": "None", "desc": "(2 = open loop)"}, 
+		    {"type": "checkbox", "name": "ol_step", "start": "20", "stop": "None", "desc": "(number of steps per pulse"}, 
+		    {"type": "checkbox", "name": "uart_req", "start": "10", "stop": "0", "desc": "(requesting 10 Amps,  uncheck to stop)"}
+		]
+	    },
+	    "second_column": {
+	    },
+	    "conclusion": "Selecting these click boxes should get your motor spinning.  To stop,  unselect the last checkbox.  If the motor is attempting to spin or not spinning check your wiring and controller.  If it's a large motor you may need to set curr_max to something > 40 Amps.  If you stream data by selecting the \"Data\" button below you should see that 10 phase Amps are being used."
+	},
+	{
+	    "title": "Throttle test",
+	    "first_column": {
+		"widgets": [
+		    {"type": "checkbox", "name": "curr_max", "start": "40.0", "stop": "None", "desc": "(40 Amps, something safe)"},
+		    {"type": "checkbox", "name": "motor_sensor", "start": "0", "stop": "None", "desc": "(0 = SL, \"sensorless\")"},
+		    {"type": "checkbox", "name": "input_opt", "start": "1", "stop": "8", "desc": "(checked sets to 1 = ADC1, unchecked sets 8 = UART )"},
+		    {"type": "entrybox", "name": "adc1_min", "desc": "set minimum value for adc1 range"},
+		    {"type": "entrybox", "name": "adc1_max", "desc": "set maximum value for adc1 range"}
+		]
+	    },
+	    "second_column": {
+	    },
+	    "conclusion": "Physically connect a potentiometer to the adc1 input of your mesc board.  Select sensorless mode, and change the set input_opt value to 1 to send adc1 values to your controller.  If you stream data by selecting the \"Data\" button below you should see the throttle widget update when you turn your potentiometer."
+	},
+	{
+	    "title": "uart_req test",
+	    "first_column": {
+		"widgets": [
+		    {"type": "checkbox", "name": "curr_max", "start": "40.0", "stop": "None", "desc": "(40 Amps, something safe)"},
+		    {"type": "checkbox", "name": "motor_sensor", "start": "0", "stop": "None", "desc": "(0 = SL, \"sensorless\")"},
+		    {"type": "checkbox", "name": "input_opt", "start": "8", "stop": "1", "desc": "(8, input from UART)"},
+		    {"type": "checkbox", "name": "uart_req", "start": "3", "stop": "0", "desc": "(ranges from 0 to 6)"}
+		]
+	    },
+	    "second_column": {
+	    },
+	    "conclusion": "uart_req spins at fixed levels ranging from 0 (nothing) to 6.  click = 3,  unclick = 0.  Caution: this can really crank up the speed of the motor"
+	}
+    ],
     "interface":
     {
 	"port_substring": "cu.usbmodem",

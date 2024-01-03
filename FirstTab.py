@@ -12,6 +12,7 @@ class FirstTab(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.parent = parent
         self.port = parent.port
+        self.lineEditBoxes = parent.lineEditBoxes
         self.statusText = parent.statusBar.statusText
         self.getButton = parent.statusBar.getButton
         self.saveButton = parent.statusBar.saveButton
@@ -19,6 +20,7 @@ class FirstTab(QtWidgets.QMainWindow):
         self.serialPayload = parent.serialPayload
         self.port_substring = parent.port_substring
         self.max_chars = 3000
+        self.numerical_pad_status = parent.numerical_pad_status
         self.customButtonHoverEnter = parent.statusBar.customButtonHoverEnter
         self.customButtonHoverLeave = parent.statusBar.customButtonHoverLeave
 
@@ -32,11 +34,16 @@ class FirstTab(QtWidgets.QMainWindow):
 
         self.setCentralWidget( QtWidgets.QWidget(self) )
         layout = QtWidgets.QVBoxLayout( self.centralWidget() )
-        self.radio_button = QtWidgets.QRadioButton('Show json stream')
-        self.radio_button.toggled.connect(self.toggle_text_edit)
+
+        self.radio_button1 = QtWidgets.QCheckBox('Show json stream')
+        self.radio_button1.toggled.connect(self.toggle_text_edit)
         self.jsonData.setVisible(False)
 
-        layout.addWidget(self.radio_button)
+self.radio_button2 = QtWidgets.QCheckBox('Touchscreen entry')
+        self.radio_button2.toggled.connect(self.toggle_numerical_pad)
+
+        layout.addWidget(self.radio_button1)
+        layout.addWidget(self.radio_button2)
         layout.addWidget(self.jsonDataView) # uncomment to see a json box
         layout.addWidget(self.serialDataView)
         layout.addWidget(self.serialSendView)
@@ -52,7 +59,9 @@ class FirstTab(QtWidgets.QMainWindow):
         self.serialSendView.serialSendSignal.connect(self.sendFromPort)
         self.port.readyRead.connect(self.readFromPort)
 
-    # Toggle the visibility of the QTextEdit based on the radio button state
+    def toggle_numerical_pad(self, checked):
+        self.parent.numerical_pad_status = checked
+
     def toggle_text_edit(self, checked):
         self.jsonData.setVisible(checked)
 
@@ -212,6 +221,8 @@ class SerialSendView(QtWidgets.QWidget):
 
         self.port = parent.port
         self.sendData = QtWidgets.QLineEdit(self)
+        parent.lineEditBoxes.append(self.sendData)
+
         self.sendData.returnPressed.connect(self.onReturnPressed)
         self.sendData.setMaximumWidth(200)
         self.sendData.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)

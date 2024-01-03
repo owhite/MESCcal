@@ -1,0 +1,38 @@
+{
+    "presets": [
+	{
+	    "title": "Run in open loop",
+	    "preface": "Running in open loop mode turns the motor with no feedback control.",
+	    "first_column": {
+		"widgets": [
+		    {"type": "checkbox", "name": "curr_max", "start": "40", "stop": "None", "desc": "(40 Amps, something safe)"},
+		    {"type": "checkbox", "name": "motor_sensor", "start": "0", "stop": "None", "desc": "(0 = SL, \"sensorless\")"},
+		    {"type": "checkbox", "name": "input_opt1", "start": "1", "stop": "0", "desc": "(checked sets to 1 = ADC1, unchecked sets 8 = UART )"},
+		    {"type": "entrybox", "name": "adc1_min", "desc": "set minimum value for adc1 range"},
+		    {"type": "entrybox", "name": "adc1_max", "desc": "set maximum value for adc1 range"}
+		]
+	    },
+	    "second column": {
+	    },
+	    "conclusion": "Selecting these click boxes should get your motor spinning.  To stop,  unselect the last checkbox.  If the motor is attempting to spin or not spinning check your wiring and controller.  If it's a large motor you may need to set curr_max to something > 40 Amps.  If you stream data by selecting the \"Data\" button below you should see that 10 phase Amps are being used."
+	},
+	{
+	    "title": "Run in open loop2",
+	    "preface": "Running in open loop mode turns the motor with no feedback control.",
+	    "first_column": {
+		"widgets": [
+		    {"type": "checkbox", "name": "curr_max", "start": "40", "stop": "None", "desc": "set curr_max 40 (40 Amps, something safe)"},
+		    {"type": "checkbox", "name": "motor_sensor", "start": "0", "stop": "None", "desc": "(0 = SL, \"sensorless\")"},
+		    {"type": "checkbox", "name": "input_opt1", "start": "1", "stop": "0", "desc": "(checked sets to 1 = ADC1, unchecked sets 8 = UART )"},
+		    {"type": "entrybox", "name": "adc1_min", "desc": "set minimum value for adc1 range"},
+		    {"type": "entrybox", "name": "adc1_max", "desc": "set maximum value for adc1 range"}
+		]
+	    },
+	    "second column": {
+	    },
+	    "conclusion": "Selecting these click boxes should get your motor spinning.  To stop,  unselect the last checkbox.  If the motor is attempting to spin or not spinning check your wiring and controller.  If it's a large motor you may need to set curr_max to something > 40 Amps.  If you stream data by selecting the \"Data\" button below you should see that 10 phase Amps are being used."
+	}
+    ]
+}
+
+

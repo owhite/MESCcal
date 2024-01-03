@@ -1,0 +1,7 @@
+Suppose I create a widget:
+        # Create a widget to hold the layout
+        self.layout_widget = QtWidgets.QWidget(self)
+
+And then I create a vertical layout:
+        # Create a vertical layout for the widget
+        layout = QtWidgets.QVBoxLayout(self.layout_widget)

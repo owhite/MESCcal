@@ -3,6 +3,7 @@ import time
 import math
 import colorsys
 import ColorSegmentRing
+from functools import partial
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import Qt, QRectF
@@ -27,6 +28,8 @@ class createStatusBar(QtWidgets.QMainWindow):
         self.port = parent.port
         self.os = parent.os
         self.serialPayload = parent.serialPayload
+        # self.height() = parent.height()
+
         self.initUI()
 
     def initUI(self):
@@ -37,10 +40,10 @@ class createStatusBar(QtWidgets.QMainWindow):
         self.layout_widget = QtWidgets.QWidget(self)
 
         # Create a vertical layout for the widget
-        layout = QtWidgets.QVBoxLayout(self.layout_widget)
+        self.layout = QtWidgets.QVBoxLayout(self.layout_widget)
 
-        container1 = QtWidgets.QWidget()
-        h1 = QtWidgets.QHBoxLayout(container1)
+        self.container1 = QtWidgets.QWidget()
+        h1 = QtWidgets.QHBoxLayout(self.container1)
 
         # Create buttons
         self.getButton = CapsuleButton(self, "Get")
@@ -94,7 +97,7 @@ class createStatusBar(QtWidgets.QMainWindow):
         h1.addWidget(self.adc1_ring)
 
         # h1.addWidget(self.winOpenButton)
-        layout.addWidget(container1)
+        self.layout.addWidget(self.container1)
 
         self.status_bar.addWidget(self.layout_widget)
         self.statusBar().addPermanentWidget( self.statusText )

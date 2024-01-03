@@ -5,6 +5,7 @@ import qdarkgraystyle
 import sys, re, math, json, platform
 import Payload, MESCcalModuleLoad, FirstTab, StatusBar, appsTab
 import aboutTab, howtoTab, presetsTab, ColorSegmentRing
+from NumericalInputPad import NumericalInputPad
 import importlib.util
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -30,11 +31,15 @@ class MESCcal(QtWidgets.QMainWindow):
                     t = json.load(json_file)
                     self.tab_data = t['tab_data']
                     self.interface = t['interface']
+                    self.presets = t['presets']
                 except json.JSONDecodeError as json_error:
                     print(f"Error decoding JSON: {json_error}")
         except FileNotFoundError:
             print(f"Error: The file '{file_path}' does not exist.")
             
+        ### global set of QLineEdit() boxes that will may get input from virtual keyboard
+        self.lineEditBoxes = []
+
         self.port_substring = self.interface["port_substring"]
         self.module_directory = self.interface["module_directory"]
 
@@ -47,8 +52,10 @@ class MESCcal(QtWidgets.QMainWindow):
             self.min_height = 800
         else:
             self.os = 'Mac'
-            self.min_width = 800
-            self.min_height = 800
+            self.min_width = 480
+            self.min_height = 300
+
+        self.numerical_pad_status = False
 
         ### Window ### 
         self.setMinimumWidth(self.min_width)
@@ -106,7 +113,18 @@ class MESCcal(QtWidgets.QMainWindow):
         self.setCentralWidget(self.tabWidget)
 
         self.tabWidget.currentChanged.connect(self.tab_changed)
-        
+
+    def virtualButtonClicked(self, value):
+        print("VIRTUAL {0}".format(value))
+
+        for b in self.lineEditBoxes:
+            if b.hasFocus():
+                b.setText(b.text() + value)
+                print("focus {0}".format(b.text()))
+
+    def toggle_status_bar(self, checked):
+        self.statusBar.toggle_status_bar(checked)
+
     def sendDataToApps(self, d):
         if len(self.loadModules.windowNames) > 0:
             for n in self.loadModules.windowNames:
@@ -150,7 +168,6 @@ class MESCcal(QtWidgets.QMainWindow):
                 if self.streamDict.get('time'):
                     # print("LOG: {0}".format(self.streamDict))
                     pass
-                self.presetsTab.jsonStreaming = False
                 if self.streamDict.get('vbus'):
                     # print("STATUS: {0}".format(self.streamDict))
                     self.statusBar.updateStatusJson(self.streamDict)
@@ -204,16 +221,20 @@ class MESCcal(QtWidgets.QMainWindow):
                 self.statusBar.statusText.setText("no change, dont select \"none\"")
                 return()
 
-        if not self.port.isOpen():
-            self.statusBar.statusText.setText('Port closed: cant update')
+        if self.numerical_pad_status:
+            numerical_input_pad = NumericalInputPad(self, name, n)
+            numerical_input_pad.show()  
         else:
-            if self.isIntOrFloat(n):
-                text = 'set {0} {1}'.format(name, n)
-                self.statusBar.statusText.setText(text)
-                text = text + '\r\n'
-                self.port.write( text.encode() )
+            if not self.port.isOpen():
+                self.statusBar.statusText.setText('Port closed: cant update')
             else:
-                self.statusBar.statusText.setText('{0} not number'.format(n))
+                if self.isIntOrFloat(n):
+                    text = 'set {0} {1}'.format(name, n)
+                    self.statusBar.statusText.setText(text)
+                    text = text + '\r\n'
+                    self.port.write( text.encode() )
+                else:
+                    self.statusBar.statusText.setText('{0} not number'.format(n))
 
 
     def isIntOrFloat(self, s):
@@ -320,7 +341,6 @@ class createTab(QtWidgets.QMainWindow):
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     app.setStyleSheet(qdarkgraystyle.load_stylesheet())
-
     window = MESCcal()
     window.show()
     app.exec()
