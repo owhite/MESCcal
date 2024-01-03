@@ -39,7 +39,7 @@ class FirstTab(QtWidgets.QMainWindow):
         self.radio_button1.toggled.connect(self.toggle_text_edit)
         self.jsonData.setVisible(False)
 
-self.radio_button2 = QtWidgets.QCheckBox('Touchscreen entry')
+        self.radio_button2 = QtWidgets.QCheckBox('Touchscreen entry')
         self.radio_button2.toggled.connect(self.toggle_numerical_pad)
 
         layout.addWidget(self.radio_button1)

@@ -1,4 +1,4 @@
-ximport re, json
+import re, json
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QPlainTextEdit, QHBoxLayout, QVBoxLayout, QGridLayout, QGroupBox, QCheckBox, QLabel, QDialog
 from PyQt5.QtCore import Qt, QTimer
