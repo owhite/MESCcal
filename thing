@@ -1,0 +1,109 @@
+
+    def __init__(self):
+        super(MainWindow, self).__init__()
+        self.setWindowTitle('Key Events Example')
+        layout = QVBoxLayout(self)
+
+        self.label = QLabel('Press a key...', self)
+
+        self.button1 = QPushButton('Button 1')
+        self.button2 = QPushButton('Button 2')
+        self.button3 = QPushButton('Button 3')
+
+        layout.addWidget(self.button1)
+        layout.addWidget(self.button2)
+        layout.addWidget(self.button3)
+        layout.addWidget(self.label)
+
+
+
+
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton
+from PyQt5.QtCore import Qt, QObject, pyqtSignal
+
+
+class HighlightableButton(QPushButton):
+    highlighted = pyqtSignal(bool)
+
+    def __init__(self, text, parent=None):
+        super(HighlightableButton, self).__init__(text, parent)
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setAutoDefault(True)
+        self.highlighted.connect(self.setHighlighted)
+
+    def focusInEvent(self, event):
+        self.highlighted.emit(True)
+        super(HighlightableButton, self).focusInEvent(event)
+
+    def focusOutEvent(self, event):
+        self.highlighted.emit(False)
+        super(HighlightableButton, self).focusOutEvent(event)
+
+    def setHighlighted(self, highlighted):
+        if highlighted:
+            self.setStyleSheet("background-color: yellow;")
+        else:
+            self.setStyleSheet("")
+
+
+class HighlightableButtonGroup(QObject):
+    def __init__(self, buttons):
+        super(HighlightableButtonGroup, self).__init__()
+        self.buttons = buttons
+        self.currentIndex = 0
+
+        for i, button in enumerate(self.buttons):
+            button.highlighted.connect(self.setHighlight)
+
+        self.setHighlight(True)
+
+    def setHighlight(self, highlighted):
+        sender_button = self.sender()
+        if sender_button and highlighted:
+            self.currentIndex = self.buttons.index(sender_button)
+
+    def navigate(self, direction):
+        self.buttons[self.currentIndex].setFocus(False)
+        self.currentIndex = (self.currentIndex + direction) % len(self.buttons)
+        self.buttons[self.currentIndex].setFocus(True)
+
+
+class MainWindow(QWidget):
+    def __init__(self):
+        super(MainWindow, self).__init__()
+
+        self.setWindowTitle('Arrow Key Navigation Example')
+        layout = QVBoxLayout(self)
+
+        self.button1 = HighlightableButton('Button 1')
+        self.button2 = HighlightableButton('Button 2')
+        self.button3 = HighlightableButton('Button 3')
+
+        layout.addWidget(self.button1)
+        layout.addWidget(self.button2)
+        layout.addWidget(self.button3)
+
+        # button_group = HighlightableButtonGroup([self.button1, self.button2, self.button3])
+        self.setFocus()
+
+    def keyPressEvent(self, event):
+        print(event.key())
+        if event.key() == Qt.Key_Return:
+            print ("ENTER")
+            focused_widget = self.focusWidget()
+            if focused_widget and focused_widget in [self.button1, self.button2, self.button3]:
+                focused_widget.click()
+
+        elif event.key() == Qt.Key_Left:
+            button_group.navigate(-1)
+        elif event.key() == Qt.Key_Right:
+            button_group.navigate(1)
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    mainWindow = MainWindow()
+    mainWindow.show()
+    sys.exit(app.exec_())
+W

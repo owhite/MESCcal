@@ -6,6 +6,7 @@ import sys, re, math, json, platform
 import Payload, MESCcalModuleLoad, FirstTab, StatusBar, appsTab
 import aboutTab, howtoTab, presetsTab, ColorSegmentRing
 from NumericalInputPad import NumericalInputPad
+import Events
 import importlib.util
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -114,6 +115,24 @@ class MESCcal(QtWidgets.QMainWindow):
 
         self.tabWidget.currentChanged.connect(self.tab_changed)
 
+    def keyPressEvent(self, event):
+        print("MAIN")
+        if event.text() == 'g':
+            print("get")
+        if event.text() == 'o':
+            print("open")
+        if event.text() == 'd':
+            print("switch forward")
+            current_tab_index = self.tabWidget.currentIndex()
+            next_tab_index = (current_tab_index + 1) % self.tabWidget.count()
+            self.tabWidget.setCurrentIndex(next_tab_index)
+        if event.text() == 'a':
+            print("switch back")
+            current_tab_index = self.tabWidget.currentIndex()
+            next_tab_index = (current_tab_index - 1) % self.tabWidget.count()
+            self.tabWidget.setCurrentIndex(next_tab_index)
+        
+
     def virtualButtonClicked(self, value):
         print("VIRTUAL {0}".format(value))
 
@@ -213,6 +232,7 @@ class MESCcal(QtWidgets.QMainWindow):
             self.statusBar.serialButtonOn()
                 
     def dataEntryButtonClicked(self, name, entryItem):
+        print("HERE")
         if isinstance(entryItem, QtWidgets.QLineEdit):
             n = entryItem.text()
         if isinstance(entryItem, QtWidgets.QComboBox):
@@ -235,7 +255,6 @@ class MESCcal(QtWidgets.QMainWindow):
                     self.port.write( text.encode() )
                 else:
                     self.statusBar.statusText.setText('{0} not number'.format(n))
-
 
     def isIntOrFloat(self, s):
         try:
@@ -268,11 +287,14 @@ class createTab(QtWidgets.QMainWindow):
         self.port = parent.port
         self.statusText = parent.statusBar.statusText
         self.dataEntryButtonClicked = parent.dataEntryButtonClicked
+        self.tabWidget = parent.tabWidget
         self.initUI()
 
     def initUI(self):
         self.buttons =[]
         self.entryItem ={}
+
+        self.widget_list = []
 
         self.setCentralWidget( QtWidgets.QWidget(self) )
         tab_layout = QtWidgets.QFormLayout( self.centralWidget() )
@@ -280,6 +302,28 @@ class createTab(QtWidgets.QMainWindow):
         for box in self.boxes:
             button_rows = box['buttons']
             tab_layout.addWidget(self.createBox(box['name'], button_rows))
+
+    # totally do not understand why some keyPressEvents go to this tab versus the
+    #   main program -- but dont really care. 
+    def keyPressEvent(self, event):
+        if event.text() == 'g':
+            print("get")
+        if event.text() == 'd':
+            print("switch forward")
+            current_tab_index = self.tabWidget.currentIndex()
+            next_tab_index = (current_tab_index + 1) % self.tabWidget.count()
+            self.tabWidget.setCurrentIndex(next_tab_index)
+        if event.text() == 'a':
+            print("switch back")
+            current_tab_index = self.tabWidget.currentIndex()
+            next_tab_index = (current_tab_index - 1) % self.tabWidget.count()
+            self.tabWidget.setCurrentIndex(next_tab_index)
+        if event.key() == Qt.Key_Return:
+            self.button1.click()
+        elif event.key() == Qt.Key_Left:
+            self.setFocusToPreviousWidget()
+        elif event.key() == Qt.Key_Right:
+            self.setFocusToNextWidget()
 
     def updateValues(self, struct):
         for n in struct['names']:
@@ -308,6 +352,34 @@ class createTab(QtWidgets.QMainWindow):
 
         return(group_box)
 
+    def eventFilter(self, obj, event):
+        if isinstance(obj, QtWidgets.QLineEdit):
+            if event.type() == QtCore.QEvent.FocusIn:
+                print(f"Focus In: {obj.objectName()}")
+            elif event.type() == QtCore.QEvent.FocusOut:
+                print(f"Focus Out: {obj.objectName()}")
+            elif event.type() == event.KeyPress:
+                key = event.key()
+                print(f'Key Pressed: {key}')
+                if event.key() == Qt.Key_Left:
+                    self.setFocusToPreviousWidget(obj)
+                elif event.key() == Qt.Key_Right:
+                    self.setFocusToNextWidget(obj)
+
+        return super().eventFilter(obj, event)
+
+    def setFocusToPreviousWidget(self, current_widget):
+        if current_widget:
+            index = self.widget_list.index(current_widget)
+            prev_index = (index - 1) % len(self.widget_list)
+            self.widget_list[prev_index].setFocus()
+
+    def setFocusToNextWidget(self, current_widget):
+        if current_widget:
+            index = self.widget_list.index(current_widget)
+            next_index = (index + 1) % len(self.widget_list)
+            self.widget_list[next_index].setFocus()
+
     def createRow(self, row):
         # Create a row with QHBoxLayout
         row_layout = QtWidgets.QHBoxLayout()
@@ -321,8 +393,12 @@ class createTab(QtWidgets.QMainWindow):
                     entry_item.addItem(i)
             else:
                 entry_item = QtWidgets.QLineEdit()
+                entry_item.installEventFilter(self)
+                entry_itemEvent = Events.HLLineEdit(entry_item, self.widget_list)
                 
             pb = QtWidgets.QPushButton(buttons['name'])
+            pbEvent = Events.HLButton(pb)
+
             self.entryItem[buttons['name']] = {}
             self.entryItem[buttons['name']]['entry_item'] = entry_item
             if buttons.get('round'):
@@ -331,8 +407,12 @@ class createTab(QtWidgets.QMainWindow):
             pb.setFixedWidth(120)
             pb.setToolTip(buttons['desc'])
             pb.clicked.connect(partial(self.dataEntryButtonClicked, buttons['name'], entry_item))
+
             row_layout.addWidget(pb)
             row_layout.addWidget(entry_item)
+            self.widget_list.append(pb)
+            self.widget_list.append(entry_item)
+
             row_layout.addSpacing(20)
 
         row_layout.setAlignment(QtCore.Qt.AlignLeft)
