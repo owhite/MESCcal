@@ -12,16 +12,13 @@ class HLCheckBox(QObject):
         self.checkBox = checkbox
         self.highlighted.connect(self.setHighlighted)
         self.checkBox.setFocusPolicy(Qt.StrongFocus)
-        # self.checkBox.installEventFilter(self)
+        self.checkBox.installEventFilter(self)
         self.isHighlighted = False
 
     def setHighlighted(self, highlighted):
         self.isHighlighted = highlighted
 
     def eventFilter(self, obj, event):
-        print("NEVER1")
-        return super(HLCheckBox, self).eventFilter(obj, event)
-
         if obj == self.checkBox:
             if event.type() == event.FocusIn:
                 self.highlighted.emit(True)
@@ -53,17 +50,13 @@ class HLButton(QObject):
         self.highlighted.connect(self.setHighlighted)
         self.button.setFocusPolicy(Qt.StrongFocus)
         self.button.setAutoDefault(True)
-        # self.button.installEventFilter(self)
+        self.button.installEventFilter(self)
         self.isHighlighted = False
 
     def setHighlighted(self, highlighted):
-        print("BUTTON HIGHLIGHT")
         self.isHighlighted = highlighted
 
     def eventFilter(self, obj, event):
-        print("NEVER2")
-        return super(HLButton, self).eventFilter(obj, event)
-
         if obj == self.button:
             if event.type() == event.FocusIn:
                 self.highlighted.emit(True)
@@ -91,8 +84,7 @@ class HLLineEdit(QObject):
         super(HLLineEdit, self).__init__()
         self.lineEdit = line_edit
         self.highlighted.connect(self.setHighlighted)
-        self.lineEdit.setFocusPolicy(Qt.StrongFocus)
-        # self.lineEdit.installEventFilter(self)
+        self.lineEdit.installEventFilter(self)
         self.navigation_widgets = navigation_widgets
         self.isHighlighted = False
 
@@ -100,9 +92,6 @@ class HLLineEdit(QObject):
         self.isHighlighted = highlighted
 
     def eventFilter(self, obj, event):
-        print("NEVER3")
-        return super(HLLineEdit, self).eventFilter(obj, event)
-
         if obj == self.lineEdit:
             print("IN LineEdit")
             if event.type() == event.FocusIn:
@@ -133,7 +122,7 @@ class HLComboBox(QObject):
         self.combobox = combobox
         self.highlighted.connect(self.setHighlighted)
         self.combobox.setFocusPolicy(Qt.StrongFocus)
-        # self.combobox.installEventFilter(self)
+        self.combobox.installEventFilter(self)
         self.navigation_widgets = navigation_widgets
         self.isHighlighted = False
 
@@ -141,9 +130,6 @@ class HLComboBox(QObject):
         self.isHighlighted = highlighted
 
     def eventFilter(self, obj, event):
-        print("NEVER4")
-        return super(HLComboBox, self).eventFilter(obj, event)
-
         if obj == self.combobox:
             print("IN combobox")
             if event.type() == event.FocusIn:
@@ -159,6 +145,4 @@ class HLComboBox(QObject):
                     self.setFocusToPreviousWidget()
                 elif event.key() == Qt.Key_Right:
                     self.setFocusToNextWidget()
-
-        return super(HLComboBox, self).eventFilter(obj, event)
         

@@ -232,7 +232,7 @@ class MESCcal(QtWidgets.QMainWindow):
             self.statusBar.serialButtonOn()
                 
     def dataEntryButtonClicked(self, name, entryItem):
-        print("HERE")
+        print("DATA ENTRY CLICKED")
         if isinstance(entryItem, QtWidgets.QLineEdit):
             n = entryItem.text()
         if isinstance(entryItem, QtWidgets.QComboBox):
@@ -308,22 +308,16 @@ class createTab(QtWidgets.QMainWindow):
     def keyPressEvent(self, event):
         if event.text() == 'g':
             print("get")
-        if event.text() == 'd':
+        elif event.text() == 'd':
             print("switch forward")
             current_tab_index = self.tabWidget.currentIndex()
             next_tab_index = (current_tab_index + 1) % self.tabWidget.count()
             self.tabWidget.setCurrentIndex(next_tab_index)
-        if event.text() == 'a':
+        elif event.text() == 'a':
             print("switch back")
             current_tab_index = self.tabWidget.currentIndex()
             next_tab_index = (current_tab_index - 1) % self.tabWidget.count()
             self.tabWidget.setCurrentIndex(next_tab_index)
-        if event.key() == Qt.Key_Return:
-            self.button1.click()
-        elif event.key() == Qt.Key_Left:
-            self.setFocusToPreviousWidget()
-        elif event.key() == Qt.Key_Right:
-            self.setFocusToNextWidget()
 
     def updateValues(self, struct):
         for n in struct['names']:
@@ -355,9 +349,11 @@ class createTab(QtWidgets.QMainWindow):
     def eventFilter(self, obj, event):
         if isinstance(obj, QtWidgets.QLineEdit):
             if event.type() == QtCore.QEvent.FocusIn:
-                print(f"Focus In: {obj.objectName()}")
+                obj.setStyleSheet("background-color: grey;")
+                print(f"E1 Focus In: {obj.objectName()}")
             elif event.type() == QtCore.QEvent.FocusOut:
-                print(f"Focus Out: {obj.objectName()}")
+                obj.setStyleSheet("")
+                print(f"E1 Focus Out: {obj.objectName()}")
             elif event.type() == event.KeyPress:
                 key = event.key()
                 print(f'Key Pressed: {key}')
@@ -365,6 +361,25 @@ class createTab(QtWidgets.QMainWindow):
                     self.setFocusToPreviousWidget(obj)
                 elif event.key() == Qt.Key_Right:
                     self.setFocusToNextWidget(obj)
+                elif event.key() == Qt.Key_Return:
+                    print("return pressed")
+
+        if isinstance(obj, QtWidgets.QComboBox):
+            if event.type() == QtCore.QEvent.FocusIn:
+                obj.setStyleSheet("background-color: grey;")
+                print(f"E2 Focus2 In: {obj.objectName()}")
+            elif event.type() == QtCore.QEvent.FocusOut:
+                obj.setStyleSheet("")
+                print(f"E2 Focus2 Out: {obj.objectName()}")
+            elif event.type() == event.KeyPress:
+                key = event.key()
+                print(f'Key Pressed2: {key}')
+                if event.key() == Qt.Key_Left:
+                    self.setFocusToPreviousWidget(obj)
+                elif event.key() == Qt.Key_Right:
+                    self.setFocusToNextWidget(obj)
+                elif event.key() == Qt.Key_Return:
+                    print("return pressed")
 
         return super().eventFilter(obj, event)
 
@@ -391,19 +406,22 @@ class createTab(QtWidgets.QMainWindow):
                 entry_item.addItem('none')
                 for i in buttons['list']:
                     entry_item.addItem(i)
+                entry_item.installEventFilter(self)
+                entry_itemEvent = Events.HLComboBox(entry_item, self.widget_list)
+
             else:
                 entry_item = QtWidgets.QLineEdit()
                 entry_item.installEventFilter(self)
                 entry_itemEvent = Events.HLLineEdit(entry_item, self.widget_list)
                 
-            pb = QtWidgets.QPushButton(buttons['name'])
-            pbEvent = Events.HLButton(pb)
-
             self.entryItem[buttons['name']] = {}
             self.entryItem[buttons['name']]['entry_item'] = entry_item
             if buttons.get('round'):
                 self.entryItem[buttons['name']]['round'] = buttons.get('round')
             entry_item.setFixedWidth(100)
+
+            pb = QtWidgets.QPushButton(buttons['name'])
+            pbEvent = Events.HLButton(pb)
             pb.setFixedWidth(120)
             pb.setToolTip(buttons['desc'])
             pb.clicked.connect(partial(self.dataEntryButtonClicked, buttons['name'], entry_item))
