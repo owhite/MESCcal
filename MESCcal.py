@@ -53,8 +53,8 @@ class MESCcal(QtWidgets.QMainWindow):
             self.min_height = 800
         else:
             self.os = 'Mac'
-            self.min_width = 480
-            self.min_height = 300
+            self.min_width = 600
+            self.min_height = 480
 
         self.numerical_pad_status = False
 
@@ -288,13 +288,14 @@ class createTab(QtWidgets.QMainWindow):
         self.statusText = parent.statusBar.statusText
         self.dataEntryButtonClicked = parent.dataEntryButtonClicked
         self.tabWidget = parent.tabWidget
-        self.initUI()
+        self.initUI2()
 
     def initUI(self):
         self.buttons =[]
         self.entryItem ={}
 
         self.widget_list = []
+        self.widget_index = 0
 
         self.setCentralWidget( QtWidgets.QWidget(self) )
         tab_layout = QtWidgets.QFormLayout( self.centralWidget() )
@@ -303,11 +304,46 @@ class createTab(QtWidgets.QMainWindow):
             button_rows = box['buttons']
             tab_layout.addWidget(self.createBox(box['name'], button_rows))
 
+    def initUI2(self):
+        self.buttons =[]
+        self.entryItem ={}
+
+        self.widget_list = []
+        self.widget_index = 0
+
+        self.setCentralWidget( QtWidgets.QWidget(self) )
+        scroll_area = QtWidgets.QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.installEventFilter(self)
+
+        scroll_content = QtWidgets.QWidget(scroll_area)
+        main_layout = QtWidgets.QVBoxLayout(scroll_content)
+        layout = QtWidgets.QFormLayout()
+        layout.setFieldGrowthPolicy(QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
+        # main_layout.setContentsMargins(20, 3, 200, 3)
+        main_layout.addLayout(layout)
+
+        for box in self.boxes:
+            button_rows = box['buttons']
+            layout.addWidget(self.createBox(box['name'], button_rows))
+
+        scroll_area.setWidget(scroll_content)
+        self.setCentralWidget(scroll_area)
+
+
     # totally do not understand why some keyPressEvents go to this tab versus the
     #   main program -- but dont really care. 
     def keyPressEvent(self, event):
         if event.text() == 'g':
-            print("get")
+            print("lil tab: get")
+        elif event.text() == 'o':
+            print("lil tab: open")
+        elif event.text() == '>':
+            print("lil tab: next")
+            self.setFocusToNextWidget()
+        elif event.text() == '<':
+            print("lil tab: prev")
+            self.setFocusToPreviousWidget()
         elif event.text() == 'd':
             print("switch forward")
             current_tab_index = self.tabWidget.currentIndex()
@@ -318,6 +354,32 @@ class createTab(QtWidgets.QMainWindow):
             current_tab_index = self.tabWidget.currentIndex()
             next_tab_index = (current_tab_index - 1) % self.tabWidget.count()
             self.tabWidget.setCurrentIndex(next_tab_index)
+            
+            
+    def eventFilter(self, obj, event):
+        if isinstance(obj, QtWidgets.QLineEdit):
+            if event.type() == event.KeyPress:
+                key = event.key()
+                print(f'Line edit key: {key}')
+                if event.key() == Qt.Key_Left:
+                    self.setFocusToPreviousWidget()
+                elif event.key() == Qt.Key_Right:
+                    self.setFocusToNextWidget()
+                elif event.key() == Qt.Key_Return:
+                    print("return pressed")
+
+        if isinstance(obj, QtWidgets.QComboBox):
+            if event.type() == event.KeyPress:
+                key = event.key()
+                print(f'Combo box key: {key}')
+                if event.key() == Qt.Key_Left:
+                    self.setFocusToPreviousWidget()
+                elif event.key() == Qt.Key_Right:
+                    self.setFocusToNextWidget()
+                elif event.key() == Qt.Key_Return:
+                    print("return pressed")
+
+        return super().eventFilter(obj, event)
 
     def updateValues(self, struct):
         for n in struct['names']:
@@ -346,54 +408,19 @@ class createTab(QtWidgets.QMainWindow):
 
         return(group_box)
 
-    def eventFilter(self, obj, event):
-        if isinstance(obj, QtWidgets.QLineEdit):
-            if event.type() == QtCore.QEvent.FocusIn:
-                obj.setStyleSheet("background-color: grey;")
-                print(f"E1 Focus In: {obj.objectName()}")
-            elif event.type() == QtCore.QEvent.FocusOut:
-                obj.setStyleSheet("")
-                print(f"E1 Focus Out: {obj.objectName()}")
-            elif event.type() == event.KeyPress:
-                key = event.key()
-                print(f'Key Pressed: {key}')
-                if event.key() == Qt.Key_Left:
-                    self.setFocusToPreviousWidget(obj)
-                elif event.key() == Qt.Key_Right:
-                    self.setFocusToNextWidget(obj)
-                elif event.key() == Qt.Key_Return:
-                    print("return pressed")
-
-        if isinstance(obj, QtWidgets.QComboBox):
-            if event.type() == QtCore.QEvent.FocusIn:
-                obj.setStyleSheet("background-color: grey;")
-                print(f"E2 Focus2 In: {obj.objectName()}")
-            elif event.type() == QtCore.QEvent.FocusOut:
-                obj.setStyleSheet("")
-                print(f"E2 Focus2 Out: {obj.objectName()}")
-            elif event.type() == event.KeyPress:
-                key = event.key()
-                print(f'Key Pressed2: {key}')
-                if event.key() == Qt.Key_Left:
-                    self.setFocusToPreviousWidget(obj)
-                elif event.key() == Qt.Key_Right:
-                    self.setFocusToNextWidget(obj)
-                elif event.key() == Qt.Key_Return:
-                    print("return pressed")
-
-        return super().eventFilter(obj, event)
-
-    def setFocusToPreviousWidget(self, current_widget):
+    def setFocusToPreviousWidget(self):
+        self.widget_index = (self.widget_index - 1) % len(self.widget_list)
+        print ("INDEX {0}".format(self.widget_index))
+        current_widget = self.widget_list[self.widget_index]
         if current_widget:
-            index = self.widget_list.index(current_widget)
-            prev_index = (index - 1) % len(self.widget_list)
-            self.widget_list[prev_index].setFocus()
+            self.widget_list[self.widget_index].setFocus()
 
-    def setFocusToNextWidget(self, current_widget):
+    def setFocusToNextWidget(self):
+        self.widget_index = (self.widget_index + 1) % len(self.widget_list)
+        print ("INDEX_F {0}".format(self.widget_index))
+        current_widget = self.widget_list[self.widget_index]
         if current_widget:
-            index = self.widget_list.index(current_widget)
-            next_index = (index + 1) % len(self.widget_list)
-            self.widget_list[next_index].setFocus()
+            self.widget_list[self.widget_index].setFocus()
 
     def createRow(self, row):
         # Create a row with QHBoxLayout
@@ -430,6 +457,8 @@ class createTab(QtWidgets.QMainWindow):
             row_layout.addWidget(entry_item)
             self.widget_list.append(pb)
             self.widget_list.append(entry_item)
+            self.widget_index = self.widget_index + 2
+
 
             row_layout.addSpacing(20)
 
