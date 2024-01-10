@@ -327,6 +327,8 @@ class createTab(QtWidgets.QMainWindow):
             button_rows = box['buttons']
             layout.addWidget(self.createBox(box['name'], button_rows))
 
+        self.widget_list[0].setFocus()
+
         scroll_area.setWidget(scroll_content)
         self.setCentralWidget(scroll_area)
 
@@ -361,8 +363,14 @@ class createTab(QtWidgets.QMainWindow):
             if event.type() == event.KeyPress:
                 key = event.key()
                 print(f'Line edit key: {key}')
-                if event.key() == Qt.Key_Left:
+                if event.text() == '>':
+                    print("lil tab: next")
+                    self.setFocusToNextWidget()
+                elif event.key() == Qt.Key_Left:
                     self.setFocusToPreviousWidget()
+                elif event.key() == Qt.Key_Tab:
+                    print("lil tab: TAB")
+                    self.setFocusToNextWidget()
                 elif event.key() == Qt.Key_Right:
                     self.setFocusToNextWidget()
                 elif event.key() == Qt.Key_Return:

@@ -1,104 +1,160 @@
 #!/usr/bin/env python3
 
+def createToolButton(self, button_text, layout_label):
+    tool_button = QToolButton()
+    tool_button.setText(button_text)
+    tool_button.setPopupMode(QToolButton.InstantPopup)
+
+    widget = QWidget()
+    widget_layout = QGridLayout(widget)
+    widget_label = QLabel(layout_label)
+
+    # Adjust spacing between buttons
+    widget_layout.setHorizontalSpacing(2)
+    widget_layout.setVerticalSpacing(2)
+
+    # Create a grid of buttons
+    for i in range(3):
+        for j in range(3):
+            button = QPushButton(f'{i * 3 + j + 1}')
+            button.setStyleSheet("background-color: red")
+            button.clicked.connect(self.onWidgetButtonClick)
+            widget_layout.addWidget(button, i+1, j+1)
+
+    widget_layout.addWidget(widget_label, 0, 0, 1, 3)
+
+    widget_action = QWidgetAction(tool_button)
+    widget_action.setDefaultWidget(widget)
+
+    widget_menu = QMenu(tool_button)
+    widget_menu.addAction(widget_action)
+
+    # Install event filter for the submenu (widget_menu)
+    widget_menu.installEventFilter(self)
+
+    tool_button.setMenu(widget_menu)
+
+    return tool_button
+
+def eventFilter(self, obj, event):
+    if event.type() == QEvent.KeyPress:
+        key = event.key()
+
+        # Handle key events within the submenu here
+        print(f'Key pressed in submenu: {key}')
+
+    return super().eventFilter(obj, event)
+
+
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QCheckBox, QLineEdit
-import Events
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QMainWindow, QToolButton, QVBoxLayout, QLabel, QWidget, QMenu, QWidgetAction
+from PyQt5.QtCore import Qt, QEvent, QTimer, QPoint
 
-class MainWindow(QMainWindow):
+class Example(QMainWindow):
     def __init__(self):
-        super(MainWindow, self).__init__()
+        super().__init__()
 
-        self.setWindowTitle('Highlightable Widgets Example')
+        self.initUI()
+        self.current_tool_button = None  # Track the currently focused QToolButton
 
+    def initUI(self):
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
 
         layout = QVBoxLayout(central_widget)
 
-        widget_list = []
-        self.line_edit = QLineEdit(self)
-        self.highlightable_line_edit = Events.HLLineEdit(self.line_edit, widget_list)
-        self.highlightable_line_edit.lineEditFocused.connect(self.handleLineEditFocus)
+        # Create QToolButtons
+        self.tool_buttons = [self.createToolButton(f'ToolButton {i + 1}') for i in range(2)]
+        for tool_button in self.tool_buttons:
+            layout.addWidget(tool_button)
 
-        self.button1 = QPushButton('Button 1')
-        self.button2 = QPushButton('Button 2')
-        self.button3 = QPushButton('Button 3')
+        self.setGeometry(300, 300, 300, 200)
+        self.setWindowTitle('QToolButton Navigation Example')
+        self.show()
 
-        self.highlightable_button1 = Events.HLButton(self.button1)
-        self.highlightable_button2 = Events.HLButton(self.button2)
-        self.highlightable_button3 = Events.HLButton(self.button3)
+    def createToolButton(self, label):
+        tool_button = QToolButton()
+        tool_button.setText(label)
+        tool_button.setPopupMode(QToolButton.InstantPopup)
 
-        self.highlightable_button1.buttonPressed.connect(self.handleButtonPress)  
-        self.highlightable_button2.buttonPressed.connect(self.handleButtonPress)  
-        self.highlightable_button3.buttonPressed.connect(self.handleButtonPress)  
+        widget = QWidget()
+        widget_layout = QVBoxLayout(widget)
+        widget_label = QLabel(f'Additional Label for {label}')
 
-        self.checkBox1 = QCheckBox('CheckBox 1')
-        self.checkBox2 = QCheckBox('CheckBox 2')
-        self.checkBox3 = QCheckBox('CheckBox 3')
+        # Add space between widgets
+        widget_layout.addSpacing(10)
 
-        self.highlightable_checkBox1 = Events.HLCheckBox(self.checkBox1)
-        self.highlightable_checkBox2 = Events.HLCheckBox(self.checkBox2)
-        self.highlightable_checkBox3 = Events.HLCheckBox(self.checkBox3)
+        # Create a grid of buttons (just for demonstration)
+        for i in range(3):
+            for j in range(3):
+                button = QToolButton()
+                button.setText(f'{i * 3 + j + 1}')
+                widget_layout.addWidget(button)
 
-        self.highlightable_checkBox1.checkBoxStateChanged.connect(self.handleCheckBoxStateChange)
-        self.highlightable_checkBox2.checkBoxStateChanged.connect(self.handleCheckBoxStateChange)
-        self.highlightable_checkBox3.checkBoxStateChanged.connect(self.handleCheckBoxStateChange)
+        widget_layout.addWidget(widget_label)
 
-        layout.addWidget(self.line_edit)
-        layout.addWidget(self.button1)
-        layout.addWidget(self.checkBox1)
-        layout.addWidget(self.button2)
-        layout.addWidget(self.checkBox2)
-        layout.addWidget(self.button3)
-        layout.addWidget(self.checkBox3)
+        widget_action = QWidgetAction(tool_button)
+        widget_action.setDefaultWidget(widget)
 
-        widget_list.append(self.line_edit)
-        widget_list.append(self.button1)
-        widget_list.append(self.checkBox1)
-        widget_list.append(self.button2)
-        widget_list.append(self.checkBox2)
-        widget_list.append(self.button3)
-        widget_list.append(self.checkBox3)
+        widget_menu = QMenu(tool_button)
+        widget_menu.addAction(widget_action)
+        tool_button.setMenu(widget_menu)
 
-    def handleButtonPress(self):
-        print('Button Pressed!')
+        tool_button.installEventFilter(self)  # Install event filter for QToolButton
 
-    def handleCheckBoxStateChange(self, isChecked):
-        print(f'CheckBox State Changed: {isChecked}')
+        return tool_button
 
-    def handleLineEditFocus(self):
-        print('QLineEdit Focused!')
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.FocusIn and obj in self.tool_buttons:
+            self.current_tool_button = obj
+            self.current_tool_button.setStyleSheet("background-color: yellow")
+            return True
+        return False
 
     def keyPressEvent(self, event):
-        if event.text() == 'g':
-            print("get")
-        if event.key() == Qt.Key_Return:
-            self.button1.click()
-        elif event.key() == Qt.Key_Left:
-            self.setFocusToPreviousWidget()
-        elif event.key() == Qt.Key_Right:
-            self.setFocusToNextWidget()
+        key = event.key()
 
-    def setFocusToPreviousWidget(self):
-        current_widget = self.focusWidget()
-        if current_widget:
-            next_widget = current_widget.focusPreviousChild()
-            if not next_widget:
-                next_widget = self.highlightable_line_edit.lineEdit
-            next_widget.setFocus()
+        # Navigate between QToolButtons using left/right arrows
+        if key == Qt.Key_Left:
+            self.tool_buttons[0].setStyleSheet("background-color: yellow")
+            self.tool_buttons[1].setStyleSheet("")
+            self.navigate(-1)
+        elif key == Qt.Key_Right:
+            self.tool_buttons[0].setStyleSheet("")
+            self.tool_buttons[1].setStyleSheet("background-color: yellow")
+            self.navigate(1)
 
-    def setFocusToNextWidget(self):
-        current_widget = self.focusWidget()
-        if current_widget:
-            next_widget = current_widget.focusNextChild()
-            if not next_widget:
-                next_widget = self.button1  # Set it to the first widget if at the end
-            next_widget.setFocus()
+        # Show the layout when pressing the Enter key
+        elif key == Qt.Key_Enter or key == Qt.Key_Return:
+            print("OPEN")
+            self.showLayout()
 
+    def navigate(self, direction):
+        if self.current_tool_button in self.tool_buttons:
+            current_index = self.tool_buttons.index(self.current_tool_button)
+            new_index = (current_index + direction) % len(self.tool_buttons)
+
+            # Remove highlight from the current tool button
+            self.current_tool_button.setStyleSheet("")
+
+            # Set focus on the new tool button
+            self.tool_buttons[new_index].setFocus()
+
+            # Highlight the new tool button (for demonstration purposes)
+            self.tool_buttons[new_index].setStyleSheet("background-color: yellow")
+
+    def showLayout(self):
+        print("show")
+        if self.current_tool_button:
+            print("show2")
+            # Simulate a mouse press event to open the menu and show the layout
+            point = self.current_tool_button.rect().center()
+            global_point = self.current_tool_button.mapToGlobal(point)
+            mouse_event = QEvent(QEvent.MouseButtonPress)
+            mouse_event.setPos(QPoint(global_point.x(), global_point.y()))
+            QApplication.postEvent(self.current_tool_button, mouse_event)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    example = MainWindow()
-    example.show()
+    ex = Example()
     sys.exit(app.exec_())
