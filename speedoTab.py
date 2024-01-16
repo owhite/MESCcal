@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QTabWidget, QGraphicsScene, QGraphicsView, QGraphics
 from PyQt5.QtCore import Qt, QEvent
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import QPointF
-from PyQt5.QtGui import QPolygonF
+from PyQt5.QtGui import QPolygonF, QLinearGradient, QBrush
 from PyQt5.QtWidgets import QGraphicsView
 from PyQt5.QtCore import QTimer
 
@@ -33,7 +33,7 @@ class SpeedoTab(QtWidgets.QWidget):  # Use QWidget instead of QMainWindow
 
 
         bck = QGraphicsPolygonItem(QPolygonF([QPointF(0, 0), QPointF(600, 0), QPointF(600, 480), QPointF(0, 480), QPointF(0, 0)]))
-        bck.setBrush(QColor(Qt.white))
+        bck.setBrush(QColor(Qt.black))
         scene.addItem(bck)
 
         font = QFont("Futura", 40, QFont.Medium, italic=True)
@@ -46,6 +46,18 @@ class SpeedoTab(QtWidgets.QWidget):  # Use QWidget instead of QMainWindow
             t.setPos(pos[0]-x, pos[1]-y)
             scene.addItem(t)
             self.speedDigits.append(t)
+
+        polygon = QPolygonF([QPointF(0, 0), QPointF(100, 0), QPointF(50, 100)])
+
+        # Create a QGraphicsPolygonItem
+        item = QGraphicsPolygonItem(polygon)
+        gradient = QLinearGradient(0, 0, 0, 100)
+        gradient.setColorAt(0, QColor(255, 0, 0))  # Starting color
+        gradient.setColorAt(1, QColor(0, 0, 0, 0)) 
+        # Set the brush with the gradient
+        brush = QBrush(gradient)
+        item.setBrush(brush)
+        scene.addItem(item)
 
         self.speedObjs = []
         for array in self.spd:
@@ -63,7 +75,7 @@ class SpeedoTab(QtWidgets.QWidget):  # Use QWidget instead of QMainWindow
         amps_text = QGraphicsTextItem("110")
         font = QFont("Futura", 150, QFont.Medium, italic=True)
         amps_text.setFont(font)
-        amps_text.setDefaultTextColor(QColor(Qt.black))
+        amps_text.setDefaultTextColor(QColor(Qt.white))
         x = amps_text.boundingRect().center().x()
         y = amps_text.boundingRect().center().y()
         amps_text.setPos(300 - x, 240 - y)
@@ -107,7 +119,7 @@ class SpeedoTab(QtWidgets.QWidget):  # Use QWidget instead of QMainWindow
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setGeometry(100, 100, 800, 600)  # Set window dimensions
+        self.setGeometry(100, 100, 632, 520)  # Set window dimensions
         self.central_widget = SpeedoTab(self)
         self.setCentralWidget(self.central_widget)
 

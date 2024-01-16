@@ -1,92 +1,47 @@
 #!/usr/bin/env python3
 
-import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout, QGraphicsScene, QGraphicsView, QGraphicsPolygonItem, QLCDNumber
-from PyQt5.QtCore import Qt, QPointF
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsPolygonItem, QGraphicsView, QGraphicsDropShadowEffect
+from PyQt5.QtCore import QPointF
 from PyQt5.QtGui import QPolygonF, QColor
 
-class PolygonColoringApp(QMainWindow):
+class MyScene(QGraphicsScene):
     def __init__(self):
         super().__init__()
 
-        self.init_ui()
+        # Create a polygon
+        polygon = QPolygonF([QPointF(0, -50), QPointF(50, 50), QPointF(-50, 50)])
 
-    def init_ui(self):
-        # Create QTabWidget
-        tab_widget = QTabWidget()
+        # Create a QGraphicsPolygonItem
+        item = QGraphicsPolygonItem(polygon)
 
-        # Create tabs
-        tab1 = QWidget()
-        tab2 = QWidget()
-        tab3 = QWidget()
+        # Set color and opacity of the shadow
+        shadow_color = QColor(0, 0, 0)
+        shadow_color.setAlpha(254)  # Set alpha for transparency
+        item.setGraphicsEffect(self.createDropShadow(shadow_color))
 
-        # Add tabs to the tab widget
-        tab_widget.addTab(tab1, "Tab 1")
-        tab_widget.addTab(tab2, "Tab 2")
-        tab_widget.addTab(tab3, "Tab 3")
+        # Set a pen for visualization
+        item.setPen(QColor(0, 0, 144))
 
-        # Create polygons and QLCDNumbers for the first tab
-        scene1 = QGraphicsScene(self)
-        self.create_polygons_and_lcd(scene1)
+        # Add the item to the scene
+        self.addItem(item)
 
-        # Create a QGraphicsView for the first tab
-        view1 = QGraphicsView(scene1)
+        # Set the background color of the scene to make the shadow visible
+        self.setBackgroundBrush(QColor(255, 255, 255))  # White background
 
-        # Add the QGraphicsView to the layout of the first tab
-        layout1 = QVBoxLayout(tab1)
-        layout1.addWidget(view1)
+    def createDropShadow(self, color):
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setColor(color)
+        shadow.setBlurRadius(10)
+        shadow.setOffset(0, 0)
+        return shadow
 
-        # Set the central widget of the main window to the tab widget
-        self.setCentralWidget(tab_widget)
+if __name__ == "__main__":
+    from PyQt5.QtWidgets import QApplication
 
-        self.setWindowTitle('Main Window with Tabs')
-        self.setGeometry(100, 100, 600, 400)
+    app = QApplication([])
 
-    def create_polygons_and_lcd(self, scene):
-        # Create polygons
-        polygon1 = QPolygonF([QPointF(-50, -50), QPointF(0, -100), QPointF(50, -50)])
-        polygon2 = QPolygonF([QPointF(-50, 50), QPointF(0, 100), QPointF(50, 50)])
+    scene = MyScene()
+    view = QGraphicsView(scene)
+    view.show()
 
-        # Create QGraphicsPolygonItems with different colors
-        item1 = QGraphicsPolygonItem(polygon1)
-        item1.setBrush(QColor(Qt.red))
-
-        item2 = QGraphicsPolygonItem(polygon2)
-        item2.setBrush(QColor(Qt.blue))
-
-        # Add items to the scene
-        scene.addItem(item1)
-        scene.addItem(item2)
-
-        # Create QLCDNumber widgets
-        lcd_number1 = QLCDNumber()
-        lcd_number2 = QLCDNumber()
-
-        # Set the geometry of the QLCDNumber widgets
-        lcd_number1.setGeometry(50, 220, 100, 50)
-        lcd_number2.setGeometry(250, 220, 100, 50)
-
-        # Set digit count and segment style to make the color visible
-        lcd_number1.setDigitCount(8)
-        lcd_number2.setDigitCount(8)
-        lcd_number1.setSegmentStyle(QLCDNumber.Flat)
-        lcd_number2.setSegmentStyle(QLCDNumber.Flat)
-
-        # Set color for the LCDNumbers
-        lcd_number1.setStyleSheet("color: red")
-        lcd_number2.setStyleSheet("color: blue")
-
-        # Calculate and display the area of each polygon in the QLCDNumber widgets
-        lcd_number1.display(self.calculate_polygon_area(item1.polygon()))
-        lcd_number2.display(self.calculate_polygon_area(item2.polygon()))
-
-    def calculate_polygon_area(self, polygon):
-        # Calculate the area of the polygon's bounding rectangle
-        bounding_rect = polygon.boundingRect()
-        return bounding_rect.width() * bounding_rect.height()
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = PolygonColoringApp()
-    window.show()
-    sys.exit(app.exec_())
+    app.exec_()
