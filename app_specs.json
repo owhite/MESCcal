@@ -38,7 +38,7 @@
 		    "name": "sensors",
 		    "buttons": [
 			[
-			    {"name": "SL_sensor", "type": "comboBox", "desc": "Input types to control motor", "list": ["OL", "Hall", "PWMENC", "HFI"]}
+			    {"name": "SL_sensor", "type": "comboBox", "desc": "Input types to control motor", "list": {"0": "OL", "1": "Hall", "2": "PWMENC", "3": "HFI"}}
 			]
 		    ]
 		},
@@ -46,7 +46,7 @@
 		    "name": "other values",
 		    "buttons": [
 			[
-			    {"name": "hfi_type", "type": "comboBox", "desc": "HFI type [0=None, 1=45deg, 2=d axis]", "list": ["None", "45deg", "d_axis"]},
+			    {"name": "hfi_type", "type": "comboBox", "desc": "HFI type [0=None, 1=45deg, 2=d axis]", "list": {"0": "None", "1": "45deg", "2": "d_axis"}},
 			    {"name": "park_curr", "type": "singleText", "desc": "max current for handbrake", "round": "1"}
 			],
 			[
@@ -64,7 +64,7 @@
 		    "name": "UART",
 		    "buttons": [
 			[
-			    {"name": "motor_sensor", "type": "comboBox", "desc": "0=SL, 1=Hall, 2=OL, 3=ABSENC, 4=INC_ENC, 5=HFI", "list": ["SL", "Hall", "OL", "ABSENC", "INC_ENC", "HFI"] }
+			    {"name": "motor_sensor", "type": "comboBox", "desc": "0=SL, 1=Hall, 2=OL, 3=ABSENC, 4=INC_ENC, 5=HFI", "list": {"0": "SL", "1": "Hall", "2": "OL", "3": "ABSENC", "4": "INC_ENC", "5": "HFI"}}
 			    
 			],		    
 			[
@@ -87,8 +87,8 @@
 		    "name": "input",
 		    "buttons": [
 			[
-			    {"name": "input_opt", "type": "singleText", "desc": "Inputs [1=ADC1 2=ADC2 4=PPM 8=UART]"},
-			    {"name": "SL_sensor", "type": "comboBox", "desc": "0=OL, 1=Hall, 2=PWMENC, 3=HFI", "list": ["Hall", "PWMENC", "HFI"]}
+			    {"name": "input_opt", "type": "comboBox", "desc": "Input from ADC, UART, PPM", "list": {"1": "ADC1", "2": "ADC2", "4": "PPM", "8": "UART"}},
+			    {"name": "SL_sensor", "type": "comboBox", "desc": "0=OL, 1=Hall, 2=PWMENC, 3=HFI", "list": {"0": "Hall", "1": "PWMENC", "3": "HFI"}}
 			]
 		    ]
 		},

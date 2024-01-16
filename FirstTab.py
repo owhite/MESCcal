@@ -1,8 +1,9 @@
 import re
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QPlainTextEdit, QTabWidget, QVBoxLayout, QGridLayout, QGroupBox, QRadioButton, QSpacerItem
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
+from PyQt5.QtGui import QKeyEvent, QPalette, QColor
 
 ### Port connection tab -- handles serial connection and sending commands
 ###
@@ -32,18 +33,16 @@ class FirstTab(QtWidgets.QMainWindow):
         self.serialDataView = SerialDataView(self) # these make their own QTextEdit boxes
         self.serialSendView = SerialSendView(self)
 
+        self.widgets = {}
+        self.widget_index = 0
         self.setCentralWidget( QtWidgets.QWidget(self) )
         layout = QtWidgets.QVBoxLayout( self.centralWidget() )
 
         self.radio_button1 = QtWidgets.QCheckBox('Show json stream')
-        self.radio_button1.toggled.connect(self.toggle_text_edit)
+        self.linkWidget(self.radio_button1, self.toggle_text_edit)
         self.jsonData.setVisible(False)
 
-        self.radio_button2 = QtWidgets.QCheckBox('Touchscreen entry')
-        self.radio_button2.toggled.connect(self.toggle_numerical_pad)
-
         layout.addWidget(self.radio_button1)
-        layout.addWidget(self.radio_button2)
         layout.addWidget(self.jsonDataView) # uncomment to see a json box
         layout.addWidget(self.serialDataView)
         layout.addWidget(self.serialSendView)
@@ -54,19 +53,66 @@ class FirstTab(QtWidgets.QMainWindow):
         self.addToolBar(self.toolBar)
         
         ### Signal Connect ###
-        self.toolBar.portOpenButton.clicked.connect(self.portOpen)
-        self.toolBar.portRefreshButton.clicked.connect(self.portRefresh)
         self.serialSendView.serialSendSignal.connect(self.sendFromPort)
         self.port.readyRead.connect(self.readFromPort)
 
-    def toggle_numerical_pad(self, checked):
-        self.parent.numerical_pad_status = checked
+        self.widget_index = 0
 
-    def toggle_text_edit(self, checked):
-        self.jsonData.setVisible(checked)
+    def linkWidget(self, w, func):
+        if isinstance(w, (QtWidgets.QPushButton, QtWidgets.QCheckBox)) and callable(func):
+            self.widgets[self.widget_index] = {'widget': w, 'function': func}
 
-    def portOpen(self, flag):
-        if flag:
+            if isinstance(w, QtWidgets.QPushButton):
+                try:
+                    w.clicked.connect(func)
+                except TypeError as e:
+                    print(f"Error connecting QPushButton: {e}")
+            elif isinstance(w, QtWidgets.QCheckBox):
+                try:
+                    w.stateChanged.connect(func)
+                except TypeError as e:
+                    print(f"Error connecting QCheckBox: {e}")
+
+            self.widget_index += 1
+        else:
+            print(f"Warning: Widget {w} or function {func} is not suitable for connection.")
+    
+    # keypress events not handled in main are handled here
+    def keyPressEvent(self, event):
+        key = event.key()
+
+        if key == Qt.Key_4:
+            self.navigateWidgets(-1)
+        elif key == Qt.Key_6:
+            self.navigateWidgets(1)
+        elif key == Qt.Key_Enter or key == Qt.Key_Return:
+            f = self.widgets[self.widget_index]['function']
+            f()
+        else:
+            super().keyPressEvent(event)
+
+    def navigateWidgets(self, direction):
+        self.widget_index = (self.widget_index + direction) % len(self.widgets)
+
+        for i in range(len(self.widgets)):
+            if i == self.widget_index:
+                self.widgets[i]['widget'].setFocus()
+                self.widgets[i]['widget'].setFocusPolicy(Qt.StrongFocus)
+            else:
+                self.widgets[i]['widget'].clearFocus()
+
+    def toggle_text_edit(self):
+        self.radio_button1.stateChanged.disconnect(self.toggle_text_edit)
+        self.radio_button1.setChecked(not self.radio_button1.isChecked())
+        self.radio_button1.stateChanged.connect(self.toggle_text_edit)
+
+        if self.radio_button1.isChecked():
+            self.jsonData.setVisible(True)
+        else:
+            self.jsonData.setVisible(False)
+
+    def portOpen(self):
+        if not self.port.isOpen():
             self.port.setBaudRate( self.toolBar.baudRate() )
             self.port.setPortName( self.toolBar.portName() )
             self.port.setDataBits( 8 )
@@ -88,9 +134,7 @@ class FirstTab(QtWidgets.QMainWindow):
             self.statusText.setText('Port closed')
             # self.toolBar.serialControlEnable(True)
         
-    def portRefresh(self, flag):
-        self.port.close() # bad idea? 
-        self.portOpen(True)
+    def portRefresh(self):
         self.statusText.setText('Port refresh')
         l = []
         count = 0
@@ -133,7 +177,7 @@ class FirstTab(QtWidgets.QMainWindow):
         # hoping this means we have a complete command block
         if remaining_text.endswith("@MESC>"):
             self.serialDataView.appendSerialText( remaining_text, QtGui.QColor(250, 250, 250) )
-            self.parent.updateTabs()
+            self.parent.updateTabsWithGet()
             # print("\nstring LEN1: :: {0} :: ".format(self.serialPayload.reportString()))
             self.serialPayload.resetString()
             # print("string LEN2: :: {0} :: ".format(len(self.serialPayload.reportString())))
@@ -263,11 +307,13 @@ class ToolBar(QtWidgets.QToolBar):
         # self.portOpenButton.setToolTip('attempts serial port open')
         self.portOpenButton.setCheckable(True)
         self.portOpenButton.setMinimumHeight(32)
+        parent.linkWidget(self.portOpenButton, parent.portOpen)
 
         self.portRefreshButton = QtWidgets.QPushButton('Refresh')
         self.portRefreshButton.enterEvent = lambda event: parent.customButtonHoverEnter(event, "Refreshes available serial ports")
         self.portRefreshButton.leaveEvent = parent.customButtonHoverLeave
         self.portRefreshButton.setMinimumHeight(32)
+        parent.linkWidget(self.portRefreshButton, parent.portRefresh)
 
         self.portNames = QtWidgets.QComboBox(self)
         l = []

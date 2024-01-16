@@ -3,9 +3,10 @@
 import qdarkgraystyle
 
 import sys, re, math, json, platform
-import Payload, MESCcalModuleLoad, FirstTab, StatusBar, appsTab, createTab, speedoTab
+import Payload, MESCcalModuleLoad, FirstTab, StatusBar, appsTab
 import aboutTab, howtoTab, presetsTab, ColorSegmentRing
 from NumericalInputPad import NumericalInputPad
+import Events
 import importlib.util
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -16,14 +17,12 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QApplication, QPlainTextEdit, QTabWidget
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QGroupBox, QGridLayout
 from PyQt5.QtWidgets import QGroupBox, QSpacerItem, QSizePolicy
-from PyQt5.QtCore import Qt, QTimer, QEvent
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 
 class MESCcal(QtWidgets.QMainWindow):
     def __init__(self):
         super(MESCcal, self).__init__()
-
-        self.installEventFilter(self)
 
         ### Config file controls tab variables ### 
         file_path = "app_specs.json"
@@ -78,21 +77,13 @@ class MESCcal(QtWidgets.QMainWindow):
         self.statusBar = StatusBar.createStatusBar(self)
         self.prevStatusText = ''
 
-        self.updateTabs = []
-
-        ### Speedo ### 
-        self.tabWidget = QtWidgets.QTabWidget()
-        self.speedoTab = speedoTab.SpeedoTab(self)
-        self.tabWidget.addTab(self.speedoTab, "speedo")
-        self.updateTabs.append(self.speedoTab)
-        
         ### First tab opens serial ###
+        self.tabWidget = QtWidgets.QTabWidget()
         self.tab_first = FirstTab.FirstTab(self)
         self.tabWidget.addTab(self.tab_first,'Port')
-        self.updateTabs.append(self.tab_first)
 
         ### Next tabs are specified in input json ###
-        self.makeTabs(self.tab_data)
+        self.tabs = self.makeTabs(self.tab_data)
 
         ### Get a list of apps available for spawning ###
         self.module_directory = './APPS'
@@ -103,57 +94,44 @@ class MESCcal(QtWidgets.QMainWindow):
         ### Tab to view the apps ###
         self.appsTab = appsTab.appsTab(self)
         self.tabWidget.addTab(self.appsTab,"Apps")
-        self.updateTabs.append(self.appsTab)
 
         ### Presets to make user happy
         self.presetsTab = presetsTab.presetsTab(self)
         self.tabWidget.addTab(self.presetsTab,"Presets")
-        self.updateTabs.append(self.presetsTab)
+        self.tabs.append(self.presetsTab) # this guy gets updates so add to list
 
         ### Acknowledgements and user information ###
         self.howtoTab = howtoTab.howtoTab(self)
         self.tabWidget.addTab(self.howtoTab,"How to")
-        self.updateTabs.append(self.howtoTab)
 
         system = platform.system()
 
         ### Acknowledgements and user information ###
         self.aboutTab = aboutTab.aboutTab(self)
         self.tabWidget.addTab(self.aboutTab,"About")
-        self.updateTabs.append(self.aboutTab)
 
         self.setWindowTitle("MESCcal ({0})".format(self.os))
         self.setCentralWidget(self.tabWidget)
 
         self.tabWidget.currentChanged.connect(self.tab_changed)
 
-    def eventFilter(self, obj, event):
-        if event.type() == QEvent.KeyPress:
-            key = event.key()
-            if key == Qt.Key_Right:
-                print("Right key pressed in central widget.")
-                # Do something with the key event if needed
-                return True  # Event handled
-        return super().eventFilter(obj, event)
-
     def keyPressEvent(self, event):
-        key = event.key()
-        if key == Qt.Key_G:
-            print("MAIN: get")
-        elif key == Qt.Key_O:
-            print("MAIN: open")
-        elif key == Qt.Key_D:
-            print("MAIN: switch forward")
+        print("MAIN")
+        if event.text() == 'g':
+            print("get")
+        if event.text() == 'o':
+            print("open")
+        if event.text() == 'd':
+            print("switch forward")
             current_tab_index = self.tabWidget.currentIndex()
             next_tab_index = (current_tab_index + 1) % self.tabWidget.count()
             self.tabWidget.setCurrentIndex(next_tab_index)
-        elif key == Qt.Key_A:
-            print("MAIN: switch back")
+        if event.text() == 'a':
+            print("switch back")
             current_tab_index = self.tabWidget.currentIndex()
             next_tab_index = (current_tab_index - 1) % self.tabWidget.count()
             self.tabWidget.setCurrentIndex(next_tab_index)
-        else:
-            super().keyPressEvent(event)
+        
 
     def virtualButtonClicked(self, value):
         print("VIRTUAL {0}".format(value))
@@ -166,7 +144,6 @@ class MESCcal(QtWidgets.QMainWindow):
     def toggle_status_bar(self, checked):
         self.statusBar.toggle_status_bar(checked)
 
-    # for the toys that are in the apps directory
     def sendDataToApps(self, d):
         if len(self.loadModules.windowNames) > 0:
             for n in self.loadModules.windowNames:
@@ -176,22 +153,17 @@ class MESCcal(QtWidgets.QMainWindow):
                 if hasattr(w, 'set_port'):
                     w.set_port(self.port)
 
-    # for any of the tabs that might be displaying live data
-    def sendDataToTabs(self, d):
-        for tab in self.updateTabs:
-            if hasattr(tab, 'updateValuesWithStream'):
-                tab.updateValuesWithStream(d)
-
-
     ### Render tabs described in json config file ###
     def makeTabs(self, json_specs):
+        tabs = []
         count = 0
         for t in json_specs.keys():
             self.tab_dict = json_specs[t]
             self.boxes = json_specs[t]['boxes']
-            tab = createTab.createTab(self)
-            self.updateTabs.append(tab)
+            tab = createTab(self)
+            tabs.append(tab)
             self.tabWidget.addTab(tab,json_specs[t]['title'])
+        return(tabs)
 
     # closes all the spawned apps/windows
     def closeEvent(self, event):
@@ -219,7 +191,6 @@ class MESCcal(QtWidgets.QMainWindow):
                     # print("STATUS: {0}".format(self.streamDict))
                     self.statusBar.updateStatusJson(self.streamDict)
                 self.sendDataToApps(self.streamDict)
-                self.sendDataToTabs(self.streamDict)
             except json.JSONDecodeError as e:
                 print("Getting bad json: {0}".format(row))
 
@@ -227,16 +198,15 @@ class MESCcal(QtWidgets.QMainWindow):
     #  theres a lot of tabs that show data, update those tabs
     #  this is selective, some strings that come in are
     #  ignored for now
-    def updateTabsWithGet(self):
+    def updateTabs(self):
         if len(self.serialPayload.reportString()) > 0:
             self.serialPayload.parsePayload()
             p = self.serialPayload.reportPayload()
             # print("names: {0}".format(p['names']))
             # update tabs if the payload has anything, 
             if p is not None and len(p['names']) > 0:
-                for tab in self.updateTabs:
-                    if hasattr(tab, 'updateValuesWithGet'):
-                        tab.updateValuesWithGet(p)
+                for tab in self.tabs:
+                    tab.updateValues(p)
 
             self.statusBar.updateStatusPayload(p)
 
@@ -305,6 +275,203 @@ class MESCcal(QtWidgets.QMainWindow):
             self.aboutTab.updateThisTab()
 
 
+### Creates a tab that is described in json config file
+### 
+class createTab(QtWidgets.QMainWindow): 
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.tab_dict = parent.tab_dict
+        self.boxes = self.tab_dict['boxes']
+        self.tab_title = self.tab_dict['title']
+        self.port = parent.port
+        self.statusText = parent.statusBar.statusText
+        self.dataEntryButtonClicked = parent.dataEntryButtonClicked
+        self.tabWidget = parent.tabWidget
+        self.initUI2()
+
+    def initUI(self):
+        self.buttons =[]
+        self.entryItem ={}
+
+        self.widget_list = []
+        self.widget_index = 0
+
+        self.setCentralWidget( QtWidgets.QWidget(self) )
+        tab_layout = QtWidgets.QFormLayout( self.centralWidget() )
+
+        for box in self.boxes:
+            button_rows = box['buttons']
+            tab_layout.addWidget(self.createBox(box['name'], button_rows))
+
+    def initUI2(self):
+        self.buttons =[]
+        self.entryItem ={}
+
+        self.widget_list = []
+        self.widget_index = 0
+
+        self.setCentralWidget( QtWidgets.QWidget(self) )
+        scroll_area = QtWidgets.QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.installEventFilter(self)
+
+        scroll_content = QtWidgets.QWidget(scroll_area)
+        main_layout = QtWidgets.QVBoxLayout(scroll_content)
+        layout = QtWidgets.QFormLayout()
+        layout.setFieldGrowthPolicy(QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
+        # main_layout.setContentsMargins(20, 3, 200, 3)
+        main_layout.addLayout(layout)
+
+        for box in self.boxes:
+            button_rows = box['buttons']
+            layout.addWidget(self.createBox(box['name'], button_rows))
+
+        self.widget_list[0].setFocus()
+
+        scroll_area.setWidget(scroll_content)
+        self.setCentralWidget(scroll_area)
+
+
+    # totally do not understand why some keyPressEvents go to this tab versus the
+    #   main program -- but dont really care. 
+    def keyPressEvent(self, event):
+        if event.text() == 'g':
+            print("lil tab: get")
+        elif event.text() == 'o':
+            print("lil tab: open")
+        elif event.text() == '>':
+            print("lil tab: next")
+            self.setFocusToNextWidget()
+        elif event.text() == '<':
+            print("lil tab: prev")
+            self.setFocusToPreviousWidget()
+        elif event.text() == 'd':
+            print("switch forward")
+            current_tab_index = self.tabWidget.currentIndex()
+            next_tab_index = (current_tab_index + 1) % self.tabWidget.count()
+            self.tabWidget.setCurrentIndex(next_tab_index)
+        elif event.text() == 'a':
+            print("switch back")
+            current_tab_index = self.tabWidget.currentIndex()
+            next_tab_index = (current_tab_index - 1) % self.tabWidget.count()
+            self.tabWidget.setCurrentIndex(next_tab_index)
+            
+            
+    def eventFilter(self, obj, event):
+        if isinstance(obj, QtWidgets.QLineEdit):
+            if event.type() == event.KeyPress:
+                key = event.key()
+                print(f'Line edit key: {key}')
+                if event.text() == '>':
+                    print("lil tab: next")
+                    self.setFocusToNextWidget()
+                elif event.key() == Qt.Key_Left:
+                    self.setFocusToPreviousWidget()
+                elif event.key() == Qt.Key_Tab:
+                    print("lil tab: TAB")
+                    self.setFocusToNextWidget()
+                elif event.key() == Qt.Key_Right:
+                    self.setFocusToNextWidget()
+                elif event.key() == Qt.Key_Return:
+                    print("return pressed")
+
+        if isinstance(obj, QtWidgets.QComboBox):
+            if event.type() == event.KeyPress:
+                key = event.key()
+                print(f'Combo box key: {key}')
+                if event.key() == Qt.Key_Left:
+                    self.setFocusToPreviousWidget()
+                elif event.key() == Qt.Key_Right:
+                    self.setFocusToNextWidget()
+                elif event.key() == Qt.Key_Return:
+                    print("return pressed")
+
+        return super().eventFilter(obj, event)
+
+    def updateValues(self, struct):
+        for n in struct['names']:
+            r = self.entryItem.get(n)
+            if r is not None:
+                if isinstance(r['entry_item'], QtWidgets.QLineEdit):
+                    value = struct[n]['value']
+                    if r.get('round'):
+                        value = float(value)
+                        rnd = int(r.get('round'))
+                        value = round(value, rnd)
+                        if rnd == 0:
+                            value = int(value)
+                        value = str(value)
+                    r['entry_item'].setText(value)
+                if isinstance(r['entry_item'], QtWidgets.QComboBox):
+                    r['entry_item'].setCurrentIndex(1 + int(struct[n]['value']))
+
+    def createBox(self, box_name, button_rows):
+        group_box = QtWidgets.QGroupBox(box_name)
+        group_box_layout = QtWidgets.QVBoxLayout()
+        for row in button_rows:
+            group_box_layout.addLayout(self.createRow(row))
+
+        group_box.setLayout(group_box_layout)
+
+        return(group_box)
+
+    def setFocusToPreviousWidget(self):
+        self.widget_index = (self.widget_index - 1) % len(self.widget_list)
+        print ("INDEX {0}".format(self.widget_index))
+        current_widget = self.widget_list[self.widget_index]
+        if current_widget:
+            self.widget_list[self.widget_index].setFocus()
+
+    def setFocusToNextWidget(self):
+        self.widget_index = (self.widget_index + 1) % len(self.widget_list)
+        print ("INDEX_F {0}".format(self.widget_index))
+        current_widget = self.widget_list[self.widget_index]
+        if current_widget:
+            self.widget_list[self.widget_index].setFocus()
+
+    def createRow(self, row):
+        # Create a row with QHBoxLayout
+        row_layout = QtWidgets.QHBoxLayout()
+        row_layout.setSpacing(0)
+
+        for buttons in row:
+            if "comboBox" in buttons['type']:
+                entry_item = QtWidgets.QComboBox()
+                entry_item.addItem('none')
+                for i in buttons['list']:
+                    entry_item.addItem(i)
+                entry_item.installEventFilter(self)
+                entry_itemEvent = Events.HLComboBox(entry_item, self.widget_list)
+
+            else:
+                entry_item = QtWidgets.QLineEdit()
+                entry_item.installEventFilter(self)
+                entry_itemEvent = Events.HLLineEdit(entry_item, self.widget_list)
+                
+            self.entryItem[buttons['name']] = {}
+            self.entryItem[buttons['name']]['entry_item'] = entry_item
+            if buttons.get('round'):
+                self.entryItem[buttons['name']]['round'] = buttons.get('round')
+            entry_item.setFixedWidth(100)
+
+            pb = QtWidgets.QPushButton(buttons['name'])
+            pbEvent = Events.HLButton(pb)
+            pb.setFixedWidth(120)
+            pb.setToolTip(buttons['desc'])
+            pb.clicked.connect(partial(self.dataEntryButtonClicked, buttons['name'], entry_item))
+
+            row_layout.addWidget(pb)
+            row_layout.addWidget(entry_item)
+            self.widget_list.append(pb)
+            self.widget_list.append(entry_item)
+            self.widget_index = self.widget_index + 2
+
+
+            row_layout.addSpacing(20)
+
+        row_layout.setAlignment(QtCore.Qt.AlignLeft)
+        return(row_layout)
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)

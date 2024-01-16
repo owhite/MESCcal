@@ -274,9 +274,9 @@ class presetsTab(QtWidgets.QMainWindow):
 
     # note that the state of the checkboxes only change when
     #  the program gets something from the serial. When a string comes in, it's parsed, then
-    #  updateValues gets called. Notice how this changes the checkboxes programmatically
+    #  updateValuesWithGet gets called. Notice how this changes the checkboxes programmatically
     #  and onCheckboxChange() will behave differently
-    def updateValues(self, struct):
+    def updateValuesWithGet(self, struct):
         for cb in self.checkboxes:
             n = self.checkboxes[cb].get('name')
             s = self.checkboxes[cb].get('start')
