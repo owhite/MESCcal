@@ -55,11 +55,14 @@ class createTab(QtWidgets.QMainWindow):
 
         if key == Qt.Key_4:
             print("sub LEFT")
+            self.parent.key_sound()
             self.navigateTools(-1)
         elif key == Qt.Key_6:
             print("sub RIGHT")
+            self.parent.key_sound()
             self.navigateTools(1)
         elif key == Qt.Key_Enter or key == Qt.Key_Return:
+            self.parent.key_sound()
             print("sub open tool")
             self.openTool()
         else:

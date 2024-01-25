@@ -1,47 +1,46 @@
 #!/usr/bin/env python3
 
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsPolygonItem, QGraphicsView, QGraphicsDropShadowEffect
-from PyQt5.QtCore import QPointF
-from PyQt5.QtGui import QPolygonF, QColor
+from os import environ
+environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 
-class MyScene(QGraphicsScene):
+import pygame
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout
+from PyQt5.QtCore import Qt
+
+class SoundPlayerApp(QWidget):
     def __init__(self):
         super().__init__()
 
-        # Create a polygon
-        polygon = QPolygonF([QPointF(0, -50), QPointF(50, 50), QPointF(-50, 50)])
+        self.init_ui()
 
-        # Create a QGraphicsPolygonItem
-        item = QGraphicsPolygonItem(polygon)
+    def init_ui(self):
+        # Create a QPushButton
+        btn_play_sound = QPushButton('Play Sound', self)
 
-        # Set color and opacity of the shadow
-        shadow_color = QColor(0, 0, 0)
-        shadow_color.setAlpha(254)  # Set alpha for transparency
-        item.setGraphicsEffect(self.createDropShadow(shadow_color))
+        # Connect the button's click event to the play_sound method
+        btn_play_sound.clicked.connect(self.play_sound)
 
-        # Set a pen for visualization
-        item.setPen(QColor(0, 0, 144))
+        # Create a vertical layout and add the button to it
+        layout = QVBoxLayout(self)
+        layout.addWidget(btn_play_sound)
 
-        # Add the item to the scene
-        self.addItem(item)
+        # Set the layout for the main window
+        self.setLayout(layout)
 
-        # Set the background color of the scene to make the shadow visible
-        self.setBackgroundBrush(QColor(255, 255, 255))  # White background
+        pygame.mixer.init(channels=1, buffer=1024)
+        pygame.mixer.music.load('/Users/owhite/MESCcal/soundfile.wav')
 
-    def createDropShadow(self, color):
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setColor(color)
-        shadow.setBlurRadius(10)
-        shadow.setOffset(0, 0)
-        return shadow
+        # Set the window properties
+        self.setGeometry(300, 300, 300, 100)
+        self.setWindowTitle('Sound Player App')
+        self.show()
 
-if __name__ == "__main__":
-    from PyQt5.QtWidgets import QApplication
+    def play_sound(self):
+        # Initialize Pygame mixer
+        pygame.mixer.music.play()
 
-    app = QApplication([])
-
-    scene = MyScene()
-    view = QGraphicsView(scene)
-    view.show()
-
-    app.exec_()
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = SoundPlayerApp()
+    sys.exit(app.exec_())

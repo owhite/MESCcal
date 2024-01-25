@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+from os import environ
+environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+
+import pygame
+
 import qdarkgraystyle
 
 import sys, re, math, json, platform
@@ -74,6 +79,9 @@ class MESCcal(QtWidgets.QMainWindow):
         self.serialPayload.startTimer()
         self.serialStreamingOn = False
 
+        pygame.mixer.init(channels=1, buffer=1024)
+        pygame.mixer.music.load('./soundfile.wav')
+
         ### Status Bar ###
         self.statusBar = StatusBar.createStatusBar(self)
         self.prevStatusText = ''
@@ -127,6 +135,9 @@ class MESCcal(QtWidgets.QMainWindow):
 
         self.tabWidget.currentChanged.connect(self.tab_changed)
 
+    def key_sound(self):
+        pygame.mixer.music.play()
+
     def eventFilter(self, obj, event):
         if event.type() == QEvent.KeyPress:
             key = event.key()
@@ -139,16 +150,20 @@ class MESCcal(QtWidgets.QMainWindow):
     def keyPressEvent(self, event):
         key = event.key()
         if key == Qt.Key_G:
+            self.key_sound()
             print("MAIN: get")
         elif key == Qt.Key_O:
+            self.key_sound()
             print("MAIN: open")
         elif key == Qt.Key_D:
             print("MAIN: switch forward")
+            self.key_sound()
             current_tab_index = self.tabWidget.currentIndex()
             next_tab_index = (current_tab_index + 1) % self.tabWidget.count()
             self.tabWidget.setCurrentIndex(next_tab_index)
         elif key == Qt.Key_A:
             print("MAIN: switch back")
+            self.key_sound()
             current_tab_index = self.tabWidget.currentIndex()
             next_tab_index = (current_tab_index - 1) % self.tabWidget.count()
             self.tabWidget.setCurrentIndex(next_tab_index)
