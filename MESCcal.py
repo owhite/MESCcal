@@ -28,6 +28,7 @@ class MESCcal(QtWidgets.QMainWindow):
     def __init__(self):
         super(MESCcal, self).__init__()
 
+        self.keyPressSound = True
         self.installEventFilter(self)
 
         ### Config file controls tab variables ### 
@@ -136,7 +137,8 @@ class MESCcal(QtWidgets.QMainWindow):
         self.tabWidget.currentChanged.connect(self.tab_changed)
 
     def key_sound(self):
-        pygame.mixer.music.play()
+        if self.keyPressSound:
+            pygame.mixer.music.play()
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.KeyPress:
@@ -316,8 +318,8 @@ class MESCcal(QtWidgets.QMainWindow):
         current_tab_name = self.tabWidget.tabText(index)
         if current_tab_name == 'Presets':
             self.presetsTab.updateThisTab()
-        if current_tab_name == 'About':
-            self.aboutTab.updateThisTab()
+        # if current_tab_name == 'About':
+            # self.aboutTab.updateThisTab()
 
 
 

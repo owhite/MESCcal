@@ -1,8 +1,9 @@
 import sys
+from PyQt5.QtCore import QUrl
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QTextBrowser, QPlainTextEdit, QHBoxLayout, QVBoxLayout, QGridLayout, QGroupBox, QCheckBox, QLabel, QDialog
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtCore import Qt, QUrl
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QSizePolicy, QTextBrowser
+from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtGui import QIcon
 
 ### Tab that handles acknowledgements
 ###   toubleshooting and links to additional information
@@ -10,28 +11,135 @@ from PyQt5.QtCore import Qt, QUrl
 class aboutTab(QtWidgets.QMainWindow): 
     def __init__(self, parent):
         super().__init__(parent)
+        self.parent = parent
+        self.keyPressSound = parent.keyPressSound
+        self.port = parent.port
         self.initUI()
 
     def initUI(self):
+        self.big_font = QtGui.QFont()
+        self.mid_font = QtGui.QFont()
+        self.smol_font = QtGui.QFont()
+
+        self.checkboxes = {}
+        self.entryboxes = {}
+        self.programmatic_change = False
+
+        self.big_font.setPointSize(16)
+        self.mid_font.setPointSize(14)
+        self.smol_font.setPointSize(12)
+
         self.setCentralWidget(QtWidgets.QWidget(self))
-        tab_layout = QtWidgets.QVBoxLayout(self.centralWidget())
 
-    def updateThisTab(self):
-        dialog = aboutDialog()
-        dialog.exec_()
+        scroll_area = QtWidgets.QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
 
-    def open_link(self, url):
-        # Opens the user's default web browser
-        QtGui.QDesktopServices.openUrl(QtGui.QUrl(url))
+        scroll_content = QtWidgets.QWidget(scroll_area)
+        main_layout = QtWidgets.QVBoxLayout(scroll_content)
+        layout = QtWidgets.QFormLayout()
+        layout.setFieldGrowthPolicy(QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
+        main_layout.setContentsMargins(20, 3, 200, 3)
+        main_layout.addLayout(layout)
 
-class aboutDialog(QDialog):
-    def __init__(self):
-        super().__init__()
+        layout.addWidget(self.titleBox())
+        layout.addWidget(self.preferencesBox())
 
-        self.initUI()
+        scroll_area.setWidget(scroll_content)
+        self.setCentralWidget(scroll_area)
 
-    def initUI(self):
-        vbox = QVBoxLayout()
+    def preferencesBox(self):
+        box = QtWidgets.QGroupBox('')
+        box.setFont(self.big_font)
+        box.setStyleSheet("QGroupBox { border: 1px solid white; }")
+
+        layout = QtWidgets.QVBoxLayout()
+
+        combined_layout = QtWidgets.QHBoxLayout()
+
+        # Create the first QVBoxLayout for radio buttons
+        layout1 = QtWidgets.QVBoxLayout()
+
+        label = QtWidgets.QLabel("Set your preferences")
+        label.setFont(self.big_font)
+        layout1.addWidget(label)
+
+        self.checkBoxRow(layout1, self.keyPressSound, True, False, 'Key press sounds')
+        combined_layout.addLayout(layout1)
+
+        # self.setValueRow(layout1, widget['name'], widget['name'])
+        # combined_layout.addLayout(layout1)
+
+        layout.addLayout(combined_layout)
+        box.setLayout(layout)
+
+        return box
+
+    def checkBoxRow(self, layout, value, start, stop, label_text):
+        row = QtWidgets.QHBoxLayout()
+        row.setSpacing(10)
+
+        self.checkboxes[cb] = {}
+
+        # Create a QCheckBox
+        cb = QtWidgets.QCheckBox('')
+        self.checkboxes[cb]['value'] = value
+
+        # these come in from json, if the user screws up and doesnt pass numbers it will be a problem. 
+        self.checkboxes[cb]['start'] = start
+        self.checkboxes[cb]['stop'] = stop
+            
+        cb.stateChanged.connect(self.onCheckboxChange)
+
+        cb.setFont(self.smol_font)
+        row.addWidget(cb)
+        
+        label = QtWidgets.QLabel(label_text)
+        label.setFont(self.smol_font)
+        label.setAlignment(QtCore.Qt.AlignRight)
+        row.setAlignment(QtCore.Qt.AlignLeft)
+        row.addWidget(label)
+
+        layout.addLayout(row)
+
+    def onCheckboxChange(self):
+        cb = self.sender()
+
+        global_value = self.checkboxes[cb].get('value', global_value)
+
+        if cb.isChecked():
+            self.checkboxes[cb]['value'] = self.checkboxes[cb]['stop']
+        else:
+            self.checkboxes[cb]['value'] = self.checkboxes[cb]['start']
+
+        print(self.keyPressSound)
+        print(self.checkboxes[cb]['value'])
+
+    def intFloatOrNone(self, s):
+        if s == "None":
+            return(None)
+        if s is None:
+            return(None)
+
+        sign = 1
+        if s.startswith('-'):
+            sign = -1
+            s = re.sub('^-', '', s)
+
+        if s.isdigit():
+            s = int(s)
+        else:
+            s = float(s)
+
+        return(s * sign)
+
+
+    def titleBox(self):
+        box = QtWidgets.QGroupBox('')
+        box.setFont(self.big_font)
+        box.setFixedHeight(220) # I dislike this is the only way to control space around text
+        box.setStyleSheet("QGroupBox { border: 3px solid white; }")
+        # Create the first QVBoxLayout for radio buttons
+        layout = QtWidgets.QVBoxLayout()
 
         text = """
         <div style="text-align: left;">
@@ -57,24 +165,17 @@ class aboutDialog(QDialog):
         </div>
         """
 
-        # Use QTextBrowser instead of QLabel for clickable links
-        text_browser = QTextBrowser(self)
-        text_browser.setOpenExternalLinks(True)
-        text_browser.setHtml(text)
+        # Create a QLabel to display the text
+        label = QtWidgets.QLabel(self)
+        label.setOpenExternalLinks(True)
+        label.setWordWrap(True)
+        label.setText(text)
+        layout.addWidget(label)
+        box.setLayout(layout)
 
-        vbox.addWidget(text_browser)
-
-        close_button = QtWidgets.QPushButton('Okay', self)
-        close_button.clicked.connect(self.close)
-        vbox.addWidget(close_button)
-
-        self.setLayout(vbox)
-        self.setWindowTitle('About MESCcal')
-        self.setGeometry(180, 300, 460, 350)
-
-        # Connect the open_link method to the anchorClicked signal
-        text_browser.anchorClicked.connect(self.open_link)
+        return box
 
     def open_link(self, url):
         # Opens the user's default web browser
-        QDesktopServices.openUrl(url)
+        QtGui.QDesktopServices.openUrl(QtGui.QUrl(url))
+
