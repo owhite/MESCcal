@@ -22,8 +22,8 @@ class aboutTab(QtWidgets.QMainWindow):
         self.smol_font = QtGui.QFont()
 
         self.checkboxes = {}
-        self.entryboxes = {}
-        self.programmatic_change = False
+        self.widgets = []
+        self.widget_index = 0
 
         self.big_font.setPointSize(16)
         self.mid_font.setPointSize(14)
@@ -63,32 +63,26 @@ class aboutTab(QtWidgets.QMainWindow):
         label.setFont(self.big_font)
         layout1.addWidget(label)
 
-        self.checkBoxRow(layout1, self.keyPressSound, True, False, 'Key press sounds')
+        self.checkBoxRow(layout1, self.keyPressSound, 'Key press sounds')
         combined_layout.addLayout(layout1)
-
-        # self.setValueRow(layout1, widget['name'], widget['name'])
-        # combined_layout.addLayout(layout1)
 
         layout.addLayout(combined_layout)
         box.setLayout(layout)
 
         return box
 
-    def checkBoxRow(self, layout, value, start, stop, label_text):
+    def checkBoxRow(self, layout, mutable, label_text):
         row = QtWidgets.QHBoxLayout()
         row.setSpacing(10)
 
-        self.checkboxes[cb] = {}
-
         # Create a QCheckBox
         cb = QtWidgets.QCheckBox('')
-        self.checkboxes[cb]['value'] = value
-
-        # these come in from json, if the user screws up and doesnt pass numbers it will be a problem. 
-        self.checkboxes[cb]['start'] = start
-        self.checkboxes[cb]['stop'] = stop
-            
+        cb.setChecked(mutable[0])
         cb.stateChanged.connect(self.onCheckboxChange)
+
+        self.checkboxes[cb] = mutable
+        self.widgets.append(cb)
+        self.widget_index += 1
 
         cb.setFont(self.smol_font)
         row.addWidget(cb)
@@ -103,16 +97,8 @@ class aboutTab(QtWidgets.QMainWindow):
 
     def onCheckboxChange(self):
         cb = self.sender()
-
-        global_value = self.checkboxes[cb].get('value', global_value)
-
-        if cb.isChecked():
-            self.checkboxes[cb]['value'] = self.checkboxes[cb]['stop']
-        else:
-            self.checkboxes[cb]['value'] = self.checkboxes[cb]['start']
-
-        print(self.keyPressSound)
-        print(self.checkboxes[cb]['value'])
+        self.checkboxes[cb].setChecked(not self.checkboxes[cb].isChecked())
+        self.checkboxes[cb] = self.checkboxes[cb].isChecked()
 
     def intFloatOrNone(self, s):
         if s == "None":

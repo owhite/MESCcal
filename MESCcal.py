@@ -28,7 +28,7 @@ class MESCcal(QtWidgets.QMainWindow):
     def __init__(self):
         super(MESCcal, self).__init__()
 
-        self.keyPressSound = True
+        self.keyPressSound = [False]  # Use a list to hold a mutable object
         self.installEventFilter(self)
 
         ### Config file controls tab variables ### 
