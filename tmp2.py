@@ -1,46 +1,48 @@
 #!/usr/bin/env python3
 
-from os import environ
-environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
-
-import pygame
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLineEdit, QLabel
+from configparser import ConfigParser
 
-class SoundPlayerApp(QWidget):
+class ConfigWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.init_ui()
+        self.setWindowTitle("Config Window")
 
-    def init_ui(self):
-        # Create a QPushButton
-        btn_play_sound = QPushButton('Play Sound', self)
+        # UI components
+        self.label = QLabel("Enter a value:")
+        self.line_edit = QLineEdit()
+        self.save_button = QPushButton("Save Config")
 
-        # Connect the button's click event to the play_sound method
-        btn_play_sound.clicked.connect(self.play_sound)
+        # Layout
+        layout = QVBoxLayout()
+        layout.addWidget(self.label)
+        layout.addWidget(self.line_edit)
+        layout.addWidget(self.save_button)
 
-        # Create a vertical layout and add the button to it
-        layout = QVBoxLayout(self)
-        layout.addWidget(btn_play_sound)
+        central_widget = QWidget()
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
 
-        # Set the layout for the main window
-        self.setLayout(layout)
+        # Connect signals
+        self.save_button.clicked.connect(self.save_config)
 
-        pygame.mixer.init(channels=1, buffer=1024)
-        pygame.mixer.music.load('/Users/owhite/MESCcal/soundfile.wav')
+    def save_config(self):
+        config = ConfigParser()
 
-        # Set the window properties
-        self.setGeometry(300, 300, 300, 100)
-        self.setWindowTitle('Sound Player App')
-        self.show()
+        # Example configuration
+        config['Settings'] = {
+            'value': self.line_edit.text()
+        }
 
-    def play_sound(self):
-        # Initialize Pygame mixer
-        pygame.mixer.music.play()
+        # Save to a file
+        with open('config.ini', 'w') as configfile:
+            config.write(configfile)
+        print("Config saved!")
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ex = SoundPlayerApp()
+    window = ConfigWindow()
+    window.show()
     sys.exit(app.exec_())

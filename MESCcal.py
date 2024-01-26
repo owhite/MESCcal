@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
 
-from os import environ
-environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
-
-import pygame
-
-import qdarkgraystyle
-
 import sys, re, math, json, platform
+from configparser import ConfigParser
 import Payload, MESCcalModuleLoad, FirstTab, StatusBar, appsTab, createTab, speedoTab
 import aboutTab, howtoTab, presetsTab, ColorSegmentRing
 from NumericalInputPad import NumericalInputPad
@@ -24,11 +18,15 @@ from PyQt5.QtWidgets import QGroupBox, QSpacerItem, QSizePolicy
 from PyQt5.QtCore import Qt, QTimer, QEvent
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 
+import qdarkgraystyle
+from os import environ
+environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1' # stop annoying messages
+import pygame
+
 class MESCcal(QtWidgets.QMainWindow):
     def __init__(self):
         super(MESCcal, self).__init__()
 
-        self.keyPressSound = [False]  # Use a list to hold a mutable object
         self.installEventFilter(self)
 
         ### Config file controls tab variables ### 
@@ -38,18 +36,30 @@ class MESCcal(QtWidgets.QMainWindow):
                 try:
                     t = json.load(json_file)
                     self.tab_data = t['tab_data']
-                    self.interface = t['interface']
                     self.presets = t['presets']
                 except json.JSONDecodeError as json_error:
                     print(f"Error decoding JSON: {json_error}")
         except FileNotFoundError:
             print(f"Error: The file '{file_path}' does not exist.")
             
-        ### global set of QLineEdit() boxes that will may get input from virtual keyboard
-        self.lineEditBoxes = []
+        ### Config file controls UI variables ### 
+        config = ConfigParser()
+        try:
+            with open('app_specs.ini', 'r') as configfile:
+                config.read_file(configfile)
+        except FileNotFoundError:
+            print("Config file not found")
 
-        self.port_substring = self.interface["port_substring"]
-        self.module_directory = self.interface["module_directory"]
+        self.keyPressSound = [False]  # Use a list to hold a mutable object
+        self.useKeypresses = [False]
+
+        if config.get('Settings', 'use_keypresses') == 'True':
+            self.useKeypresses = [True]
+        if config.get('Settings', 'use_keypress_sound') == 'True':
+            self.keyPressSound = [True]
+
+        self.port_substring = config.get('Settings', 'port_substring')
+        self.module_directory = config.get('Settings', 'module_directory')
 
         system = platform.system()
 
@@ -137,7 +147,7 @@ class MESCcal(QtWidgets.QMainWindow):
         self.tabWidget.currentChanged.connect(self.tab_changed)
 
     def key_sound(self):
-        if self.keyPressSound:
+        if self.keyPressSound[0]:
             pygame.mixer.music.play()
 
     def eventFilter(self, obj, event):
@@ -171,14 +181,6 @@ class MESCcal(QtWidgets.QMainWindow):
             self.tabWidget.setCurrentIndex(next_tab_index)
         else:
             super().keyPressEvent(event)
-
-    def virtualButtonClicked(self, value):
-        print("VIRTUAL {0}".format(value))
-
-        for b in self.lineEditBoxes:
-            if b.hasFocus():
-                b.setText(b.text() + value)
-                print("focus {0}".format(b.text()))
 
     def toggle_status_bar(self, checked):
         self.statusBar.toggle_status_bar(checked)

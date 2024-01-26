@@ -13,6 +13,7 @@ class aboutTab(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.parent = parent
         self.keyPressSound = parent.keyPressSound
+        self.useKeypresses = parent.useKeypresses
         self.port = parent.port
         self.initUI()
 
@@ -44,8 +45,16 @@ class aboutTab(QtWidgets.QMainWindow):
         layout.addWidget(self.titleBox())
         layout.addWidget(self.preferencesBox())
 
+        self.saveButton = QtWidgets.QPushButton('Save')
+        self.saveButton.clicked.connect(self.saveButtonClicked)
+        self.saveButton.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Preferred)
+        layout.addWidget(self.saveButton)
+
         scroll_area.setWidget(scroll_content)
         self.setCentralWidget(scroll_area)
+
+    def saveButtonClicked(self):
+        pass
 
     def preferencesBox(self):
         box = QtWidgets.QGroupBox('')
@@ -59,14 +68,16 @@ class aboutTab(QtWidgets.QMainWindow):
         # Create the first QVBoxLayout for radio buttons
         layout1 = QtWidgets.QVBoxLayout()
 
-        label = QtWidgets.QLabel("Set your preferences")
+        label = QtWidgets.QLabel("Set MESCcal UI preferences")
         label.setFont(self.big_font)
         layout1.addWidget(label)
 
-        self.checkBoxRow(layout1, self.keyPressSound, 'Key press sounds')
+        self.checkBoxRow(layout1, self.keyPressSound, 'Play key press sounds')
         combined_layout.addLayout(layout1)
 
+        self.checkBoxRow(layout1, self.useKeypresses, 'Use gameboy keys')
         layout.addLayout(combined_layout)
+
         box.setLayout(layout)
 
         return box
@@ -80,7 +91,8 @@ class aboutTab(QtWidgets.QMainWindow):
         cb.setChecked(mutable[0])
         cb.stateChanged.connect(self.onCheckboxChange)
 
-        self.checkboxes[cb] = mutable
+        self.checkboxes[cb] = {}
+        self.checkboxes[cb]['value'] = mutable
         self.widgets.append(cb)
         self.widget_index += 1
 
@@ -97,8 +109,8 @@ class aboutTab(QtWidgets.QMainWindow):
 
     def onCheckboxChange(self):
         cb = self.sender()
-        self.checkboxes[cb].setChecked(not self.checkboxes[cb].isChecked())
-        self.checkboxes[cb] = self.checkboxes[cb].isChecked()
+        self.checkboxes[cb]['value'][0] = cb.isChecked()
+        print(cb.isChecked())
 
     def intFloatOrNone(self, s):
         if s == "None":
@@ -122,14 +134,14 @@ class aboutTab(QtWidgets.QMainWindow):
     def titleBox(self):
         box = QtWidgets.QGroupBox('')
         box.setFont(self.big_font)
-        box.setFixedHeight(220) # I dislike this is the only way to control space around text
+        # box.setFixedHeight(220) # I dislike this is the only way to control space around text
         box.setStyleSheet("QGroupBox { border: 3px solid white; }")
         # Create the first QVBoxLayout for radio buttons
         layout = QtWidgets.QVBoxLayout()
 
         text = """
         <div style="text-align: left;">
-        <H2 style="text-align:center;">MESCcal: the MESC calibration tool</H2>
+        <H2 style="text-align:center;">About MESCcal: the MESC calibration tool</H2>
         <H3></H3>
         <br>
         MESCcal is a calibration tool for the 
@@ -145,9 +157,6 @@ class aboutTab(QtWidgets.QMainWindow):
         <br>
         An instructional video on the use of MESCcal can be found here: 
         [<a href="https://youtu.be/dQw4w9WgXcQ?t=43" style="color: #F39C12;">LINK</a>].
-        <br>
-        <br>
-        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; -owen
         </div>
         """
 

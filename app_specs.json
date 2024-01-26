@@ -185,10 +185,5 @@
 	    },
 	    "conclusion": "uart_req spins at fixed levels ranging from 0 (nothing) to 6.  click = 3,  unclick = 0.  Caution: this can really crank up the speed of the motor"
 	}
-    ],
-    "interface":
-    {
-	"port_substring": "cu.usbmodem",
-	"module_directory": "./APPS"
-    }
+    ]
 }

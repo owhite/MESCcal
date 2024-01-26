@@ -114,7 +114,8 @@ class SpeedoTab(QtWidgets.QWidget):  # Use QWidget instead of QMainWindow
         print("received big struct from get")
 
     def updateValuesWithStream(self, struct):
-        self.lcd_number1.display(struct['ehz'])
+        pass
+        # self.lcd_number1.display(struct['ehz'])
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):

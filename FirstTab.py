@@ -13,7 +13,6 @@ class FirstTab(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.parent = parent
         self.port = parent.port
-        self.lineEditBoxes = parent.lineEditBoxes
         self.statusText = parent.statusBar.statusText
         self.getButton = parent.statusBar.getButton
         self.saveButton = parent.statusBar.saveButton
@@ -265,8 +264,6 @@ class SerialSendView(QtWidgets.QWidget):
 
         self.port = parent.port
         self.sendData = QtWidgets.QLineEdit(self)
-        parent.lineEditBoxes.append(self.sendData)
-
         self.sendData.returnPressed.connect(self.onReturnPressed)
         self.sendData.setMaximumWidth(200)
         self.sendData.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
