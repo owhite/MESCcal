@@ -73,6 +73,9 @@ class MESCcal(QtWidgets.QMainWindow):
             self.min_width = 600
             self.min_height = 480
 
+        self.min_width = 800
+        self.min_height = 480
+
         self.numerical_pad_status = False
 
         ### Window ### 
@@ -150,7 +153,7 @@ class MESCcal(QtWidgets.QMainWindow):
         if self.keyPressSound[0]:
             pygame.mixer.music.play()
 
-    def eventFilter(self, obj, event):
+    def eventFilter_OLD(self, obj, event): # deprecated
         if event.type() == QEvent.KeyPress:
             key = event.key()
             if key == Qt.Key_Right:
@@ -161,6 +164,7 @@ class MESCcal(QtWidgets.QMainWindow):
 
     def keyPressEvent(self, event):
         key = event.key()
+
         if key == Qt.Key_G:
             self.key_sound()
             print("MAIN: get")
@@ -205,6 +209,7 @@ class MESCcal(QtWidgets.QMainWindow):
     ### Render tabs described in json config file ###
     def makeTabs(self, json_specs):
         count = 0
+        # capable of making muliple tags but currently it just makes one
         for t in json_specs.keys():
             self.tab_dict = json_specs[t]
             self.boxes = json_specs[t]['boxes']

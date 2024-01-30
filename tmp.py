@@ -1,36 +1,35 @@
 #!/usr/bin/env python3
 
 import sys
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
 
-class Demo(QWidget):
-    def __init__(self, parent=None):
-        super(Demo, self).__init__(parent)
+class KeyPressWidget(QWidget):
+    def __init__(self):
+        super().__init__()
 
-        self.toggle = [False]  # Use a list to hold a mutable object
+        self.initUI()
 
-        data_dict = {}
-        data_dict['value'] = self.toggle
+    def initUI(self):
+        # Create a QLabel to display key presses
+        self.label = QLabel('Press a key...')
+        
+        # Set up the layout
+        layout = QVBoxLayout()
+        layout.addWidget(self.label)
+        self.setLayout(layout)
 
-        # This is the value before the change
-        print(self.toggle[0])
+        # Set up the window
+        self.setGeometry(100, 100, 300, 200)
+        self.setWindowTitle('Key Presses')
 
-        # Change self.toggle using the dictionary reference
-        self.change_value(data_dict)
-
-        # self.toggle should now be True
-        print(self.toggle[0])
-
-    def change_value(self, d):
-        d['value'][0] = True  # Modify the mutable object inside the list
-
-def main():
-    app = QApplication(sys.argv)
-    ex = Demo()
-    ex.show()
-    sys.exit(app.exec_())
+    def keyPressEvent(self, event):
+        # Handle key presses and display key code in hexadecimal
+        key = event.key()
+        text = f'Key Pressed: {hex(key)}'
+        self.label.setText(text)
 
 if __name__ == '__main__':
-    main()
+    app = QApplication(sys.argv)
+    window = KeyPressWidget()
+    window.show()
+    sys.exit(app.exec_())

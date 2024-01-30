@@ -6,6 +6,43 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 from functools import partial
 
+class CustomScrollArea(QtWidgets.QScrollArea):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.widget_index = self.parent.widget_index
+        self.widgets = self.parent.widgets
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_4 or event.key() == Qt.Key_Left:
+            print("sub LEFT")
+            self.parent.parent.key_sound() # this is horrible
+            self.navigateTools(-1)
+        elif event.key() == Qt.Key_6 or event.key() == Qt.Key_Right:
+            print("sub RIGHT")
+            self.parent.parent.key_sound()
+            self.navigateTools(1)
+        elif event.key() == Qt.Key_Enter or event.key() == Qt.Key_Return:
+            self.parent.parent.key_sound()
+            print("sub open tool")
+            self.openTool()
+        else:
+            # Call the base class implementation for other key events
+            super().keyPressEvent(event)
+
+    # once a tool is open, bops around based on directional keys
+    def navigateTools(self, direction):
+        self.widget_index = (self.widget_index + direction) % len(self.widgets)
+
+        count = 0
+        for t in self.widgets:
+            if count == self.widget_index:
+                t.setStyleSheet("background-color: #808B96;" "border :3px solid green;")
+            else:
+                t.setStyleSheet("background-color: #808B96;" "border :3px solid #ABB2B9;")
+            count = count + 1
+
+
 ### Creates a tab that is described in json config file
 ### 
 class createTab(QtWidgets.QMainWindow): 
@@ -34,10 +71,15 @@ class createTab(QtWidgets.QMainWindow):
         self.toolButtonButtons = {}
         self.toolData = {}
 
-        central_widget = QtWidgets.QWidget(self)
-        main_layout = QtWidgets.QVBoxLayout(central_widget)
+        self.setCentralWidget(QtWidgets.QWidget(self))
+
+        scroll_area = CustomScrollArea(self)
+        scroll_content = QtWidgets.QWidget(scroll_area)
+
+        main_layout = QtWidgets.QVBoxLayout(scroll_content)
         layout = QtWidgets.QFormLayout()
-        layout.setFieldGrowthPolicy(QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
+
+        main_layout.setContentsMargins(20, 3, 200, 3)
         main_layout.addLayout(layout)
 
         for box in self.boxes:
@@ -45,28 +87,20 @@ class createTab(QtWidgets.QMainWindow):
             layout.addWidget(self.createBox(box['name'], button_rows))
 
         self.widget_index = 0
-        self.setCentralWidget(central_widget)
 
-    # keypress events not handled in main are handled here
-    def keyPressEvent(self, event):
-        key = event.key()
+        scroll_area.setWidget(scroll_content)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-        t = self.widgets[self.widget_index]
+        self.setCentralWidget(scroll_area)
+        scroll_area.setFocus()
 
-        if key == Qt.Key_4:
-            print("sub LEFT")
-            self.parent.key_sound()
-            self.navigateTools(-1)
-        elif key == Qt.Key_6:
-            print("sub RIGHT")
-            self.parent.key_sound()
-            self.navigateTools(1)
-        elif key == Qt.Key_Enter or key == Qt.Key_Return:
-            self.parent.key_sound()
-            print("sub open tool")
-            self.openTool()
-        else:
-            super().keyPressEvent(event)
+    def event(self, event):
+        if event.type() == QEvent.KeyPress:
+            # if isinstance(event, QEvent) and event.type() == QEvent.KeyPress:
+            key_event = event
+            print(f"Key Press Event: {key_event.key()}")
+
+        return super().event(event)
 
     # changes the values in all the widgets when user hits 'get'
     def updateValuesWithGet(self, struct):
@@ -369,18 +403,6 @@ class createTab(QtWidgets.QMainWindow):
                 d['value'] = label.text()
                 print(f"set {d['name']} {d['value']}")
                 obj.hide()
-
-    # once a tool is open, bops around based on directional keys
-    def navigateTools(self, direction):
-        self.widget_index = (self.widget_index + direction) % len(self.widgets)
-
-        count = 0
-        for t in self.widgets:
-            if count == self.widget_index:
-                t.setStyleSheet("background-color: #808B96;" "border :3px solid green;")
-            else:
-                t.setStyleSheet("background-color: #808B96;" "border :3px solid #ABB2B9;")
-            count = count + 1
 
     # comes here if the user has hit a tool button on keypad
     def keypadButtonClick(self, key, obj, button):

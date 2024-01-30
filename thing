@@ -1,0 +1,21 @@
+
+LEFT TOP:
+|<
+>>|
+
+SIDE OF PAD:
+Weird go
+>>
+<<
+house
+menu
+
+RIGHT TOP:
+< 0x1000012
+> 0x1000014
+^ 0x1000013
+down 0x1000015
+
+Function
+F1 0x1000030
+F10 0x1000039

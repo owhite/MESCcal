@@ -34,11 +34,12 @@ class aboutTab(QtWidgets.QMainWindow):
 
         scroll_area = QtWidgets.QScrollArea(self)
         scroll_area.setWidgetResizable(True)
-
         scroll_content = QtWidgets.QWidget(scroll_area)
+
         main_layout = QtWidgets.QVBoxLayout(scroll_content)
         layout = QtWidgets.QFormLayout()
         layout.setFieldGrowthPolicy(QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
+
         main_layout.setContentsMargins(20, 3, 200, 3)
         main_layout.addLayout(layout)
 
