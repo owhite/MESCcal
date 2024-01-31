@@ -4,6 +4,7 @@ import sys, re, math, json, platform
 from configparser import ConfigParser
 import Payload, MESCcalModuleLoad, FirstTab, StatusBar, appsTab, createTab, speedoTab
 import aboutTab, howtoTab, presetsTab, ColorSegmentRing
+from keySound import keySound
 from NumericalInputPad import NumericalInputPad
 import importlib.util
 
@@ -19,9 +20,6 @@ from PyQt5.QtCore import Qt, QTimer, QEvent
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 
 import qdarkgraystyle
-from os import environ
-environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1' # stop annoying messages
-import pygame
 
 class MESCcal(QtWidgets.QMainWindow):
     def __init__(self):
@@ -50,13 +48,15 @@ class MESCcal(QtWidgets.QMainWindow):
         except FileNotFoundError:
             print("Config file not found")
 
-        self.keyPressSound = [False]  # Use a list to hold a mutable object
         self.useKeypresses = [False]
+
 
         if config.get('Settings', 'use_keypresses') == 'True':
             self.useKeypresses = [True]
         if config.get('Settings', 'use_keypress_sound') == 'True':
             self.keyPressSound = [True]
+
+        self.sound = keySound()
 
         self.port_substring = config.get('Settings', 'port_substring')
         self.module_directory = config.get('Settings', 'module_directory')
@@ -92,9 +92,6 @@ class MESCcal(QtWidgets.QMainWindow):
         self.serialPayload = Payload.Payload()
         self.serialPayload.startTimer()
         self.serialStreamingOn = False
-
-        pygame.mixer.init(channels=1, buffer=1024)
-        pygame.mixer.music.load('./soundfile.wav')
 
         ### Status Bar ###
         self.statusBar = StatusBar.createStatusBar(self)
@@ -149,10 +146,6 @@ class MESCcal(QtWidgets.QMainWindow):
 
         self.tabWidget.currentChanged.connect(self.tab_changed)
 
-    def key_sound(self):
-        if self.keyPressSound[0]:
-            pygame.mixer.music.play()
-
     def eventFilter_OLD(self, obj, event): # deprecated
         if event.type() == QEvent.KeyPress:
             key = event.key()
@@ -166,20 +159,20 @@ class MESCcal(QtWidgets.QMainWindow):
         key = event.key()
 
         if key == Qt.Key_G:
-            self.key_sound()
+            self.sound.key_sound(self.keyPressSound[0])
             print("MAIN: get")
         elif key == Qt.Key_O:
-            self.key_sound()
+            self.sound.key_sound(self.keyPressSound[0])
             print("MAIN: open")
         elif key == Qt.Key_D:
             print("MAIN: switch forward")
-            self.key_sound()
+            self.sound.key_sound(self.keyPressSound[0])
             current_tab_index = self.tabWidget.currentIndex()
             next_tab_index = (current_tab_index + 1) % self.tabWidget.count()
             self.tabWidget.setCurrentIndex(next_tab_index)
         elif key == Qt.Key_A:
             print("MAIN: switch back")
-            self.key_sound()
+            self.sound.key_sound(self.keyPressSound[0])
             current_tab_index = self.tabWidget.currentIndex()
             next_tab_index = (current_tab_index - 1) % self.tabWidget.count()
             self.tabWidget.setCurrentIndex(next_tab_index)

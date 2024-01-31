@@ -1,35 +1,23 @@
 #!/usr/bin/env python3
 
-import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
+from os import environ
+environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'  # stop annoying messages
+import pygame
 
-class KeyPressWidget(QWidget):
-    def __init__(self):
-        super().__init__()
+class keySound():
+    def __init__(self, parent):
+        self.parent = parent
+        self.keyPressSound = [False]  # Initialize the list with a default value
+        pygame.mixer.init(channels=1, buffer=1024)
+        pygame.mixer.music.load('./soundfile.wav')
 
-        self.initUI()
+    def key_sound(self, new_value):
+        print(new_value)
+        if new_value:
+            pygame.mixer.music.play()
 
-    def initUI(self):
-        # Create a QLabel to display key presses
-        self.label = QLabel('Press a key...')
-        
-        # Set up the layout
-        layout = QVBoxLayout()
-        layout.addWidget(self.label)
-        self.setLayout(layout)
-
-        # Set up the window
-        self.setGeometry(100, 100, 300, 200)
-        self.setWindowTitle('Key Presses')
-
-    def keyPressEvent(self, event):
-        # Handle key presses and display key code in hexadecimal
-        key = event.key()
-        text = f'Key Pressed: {hex(key)}'
-        self.label.setText(text)
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = KeyPressWidget()
-    window.show()
-    sys.exit(app.exec_())
+# Now, when you create an instance of keySound, it should work as expected
+keyPressSound = [False]
+sound = keySound(keyPressSound)
+keyPressSound[0] = True
+sound.key_sound(keyPressSound[0])

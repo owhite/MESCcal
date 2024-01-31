@@ -41,6 +41,9 @@ class CustomScrollArea(QtWidgets.QScrollArea):
             print("sub Down")
             r = self.widget_rows[self.widget_index] # what row am I on? 
             print ("idx {0} :: row {1} :: len {2}".format(self.widget_index, r,self.widget_rowlen[self.widget_index]))
+
+            self.widget_rowlen[self.widget_index]
+
             self.navigateTools(self.widget_rowlen[self.widget_index]) # how far to bump forward
             self.sound.key_sound(self.keyPressSound[0])
         else:

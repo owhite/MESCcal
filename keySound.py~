@@ -1,0 +1,35 @@
+class CustomScrollArea(QtWidgets.QScrollArea):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.widget_index = self.parent.widget_index
+        self.widgets = self.parent.widgets
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_4 or event.key() == Qt.Key_Left:
+            print("sub LEFT")
+            self.parent.parent.key_sound() # this is horrible
+            self.navigateTools(-1)
+        elif event.key() == Qt.Key_6 or event.key() == Qt.Key_Right:
+            print("sub RIGHT")
+            self.parent.parent.key_sound()
+            self.navigateTools(1)
+        elif event.key() == Qt.Key_Enter or event.key() == Qt.Key_Return:
+            self.parent.parent.key_sound()
+            print("sub open tool")
+            self.openTool()
+        else:
+            # Call the base class implementation for other key events
+            super().keyPressEvent(event)
+
+    # once a tool is open, bops around based on directional keys
+    def navigateTools(self, direction):
+        self.widget_index = (self.widget_index + direction) % len(self.widgets)
+
+        count = 0
+        for t in self.widgets:
+            if count == self.widget_index:
+                t.setStyleSheet("background-color: #808B96;" "border :3px solid green;")
+            else:
+                t.setStyleSheet("background-color: #808B96;" "border :3px solid #ABB2B9;")
+            count = count + 1
