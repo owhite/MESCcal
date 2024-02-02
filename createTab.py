@@ -12,8 +12,6 @@ class CustomScrollArea(QtWidgets.QScrollArea):
         super().__init__(parent)
         self.parent = parent
         self.widget_index = self.parent.widget_index
-        self.widget_rows = self.parent.widget_rows
-        self.widget_rowlen = self.parent.widget_rowlen
         self.widgets = self.parent.widgets
         self.keyPressSound = self.parent.keyPressSound
         self.sound = keySound()
@@ -33,9 +31,21 @@ class CustomScrollArea(QtWidgets.QScrollArea):
             self.openTool()
         elif event.key() == Qt.Key_8 or event.key() == Qt.Key_Up:
             print("sub Up")
-            r = self.widget_rows[self.widget_index] # what row am I on? 
-            print ("idx {0} :: row {1} :: len {2}".format(self.widget_index, r,self.widget_rowlen[self.widget_index]))
-            self.navigateTools(-1 * self.widget_rowlen[r - 1]) # how much do I need to back up? 
+            idx = self.widget_index
+            r = self.widgets[idx]['row'] # what row am I on? 
+            new_pos = (self.widget_index - self.widgets[idx]['pos'] - 1) % len(self.widgets)
+            l = self.widgets[new_pos]['len'] # what's the length of the previous row?
+
+            if self.widgets[idx]['len'] >=  l:
+                step = self.widgets[idx]['pos'] + self.widgets[new_pos]['len'] - self.widgets[idx]['pos']
+            else:
+                step = self.widgets[idx]['pos'] + l - self.widgets[idx]['pos']
+
+            print ("idx {0} :: row {1} :: len {2} :: {3} step :: {4}".format(self.widget_index, r,
+                                                                             self.widgets[idx]['len'], l,
+                                                                             step))
+
+            self.navigateTools(-1 * step) # how much do I need to back up? 
             self.sound.key_sound(self.keyPressSound[0])
         elif event.key() == Qt.Key_2 or event.key() == Qt.Key_Down:
             print("sub Down")
@@ -52,12 +62,18 @@ class CustomScrollArea(QtWidgets.QScrollArea):
         self.widget_index = (self.widget_index + bump) % len(self.widgets)
 
         count = 0
-        for t in self.widgets:
+        for w in self.widgets:
             if count == self.widget_index:
-                t.setStyleSheet("background-color: #808B96;" "border :3px solid green;")
+                w['widget'].setStyleSheet("background-color: #808B96;" "border :3px solid green;")
             else:
-                t.setStyleSheet("background-color: #808B96;" "border :3px solid #ABB2B9;")
+                w['widget'].setStyleSheet("background-color: #808B96;" "border :3px solid #ABB2B9;")
             count = count + 1
+
+
+    # this happens when user initially selects the tool
+    def openTool(self):
+        t = self.widgets[self.widget_index]['widget']
+        t.showMenu()
 
 
 ### Creates a tab that is described in json config file
@@ -87,8 +103,6 @@ class createTab(QtWidgets.QMainWindow):
         self.outlineColor = "white"
 
         self.widgets = []
-        self.widget_rowlen  = []
-        self.widget_rows = []
         self.widget_index = 0
         self.toolButtonOnIndex = 0  # tracks highlighting buttons in each widget
         self.toolButtonButtons = {}
@@ -105,27 +119,62 @@ class createTab(QtWidgets.QMainWindow):
         main_layout.setContentsMargins(20, 3, 200, 3)
         main_layout.addLayout(layout)
 
-        count = 0
+        self.row_count = 0
         for box in self.boxes:
             button_rows = box['buttons']
             layout.addWidget(self.createBox(box['name'], button_rows))
-            # this is how much to add to a position to get to the next row
-            for b in button_rows:
-                for i in range(len(b)):
-                    self.widget_rowlen.append(len(b))
-                    self.widget_rows.append(count)
-            count += 1
                 
-        print(self.widget_rows)
-        print(self.widget_rowlen)
         self.widget_index = 0
-        self.widgets[0].setStyleSheet("background-color: #808B96;" "border :3px solid green;")
+        self.widgets[0]['widget'].setStyleSheet("background-color: #808B96;" "border :3px solid green;")
 
         scroll_area.setWidget(scroll_content)
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         self.setCentralWidget(scroll_area)
         scroll_area.setFocus()
+
+    def createBox(self, box_name, button_rows):
+        group_box = QtWidgets.QGroupBox(box_name)
+        group_box_layout = QtWidgets.QVBoxLayout()
+        for row in button_rows:
+            group_box_layout.addLayout(self.createRow(row))
+            self.row_count += 1
+
+        group_box.setLayout(group_box_layout)
+        return(group_box)
+
+    def createRow(self, row):
+        # Create a row with QHBoxLayout
+        row_layout = QtWidgets.QHBoxLayout()
+        row_layout.setSpacing(0)
+
+        dict = {}
+        # {'name': 'adc1_max', 'type': 'singleText', 'desc': 'ADC1 max val', 'round': '0'}
+        pos = 0
+        for tool in row:
+            if "comboBox" in tool['type']:
+                tool['list'] = {int(key): value for key, value in tool['list'].items()}
+                entry_item = self.createDropdown(tool['name'], tool['list'], 'None')
+            else:
+                entry_item = self.createKeypad(tool['name'], '')
+
+            row_layout.addWidget(entry_item)
+            entry_item.mousePressEvent = partial(self.toolMousePressEvent, self.widget_index)
+
+            self.widgets.append({'widget': entry_item, 'row': self.row_count, 'pos': pos, 'len': len(row)})
+            self.widget_index += 1
+            pos += 1
+
+            # xxx
+            self.entryItem[tool['name']] = {}
+            self.entryItem[tool['name']]['entry_item'] = entry_item
+            if tool.get('round'):
+                self.entryItem[tool['name']]['round'] = tool.get('round')
+
+            row_layout.addSpacing(20)
+
+        row_layout.setAlignment(QtCore.Qt.AlignLeft)
+        return(row_layout)
 
     def event(self, event):
         if event.type() == QEvent.KeyPress:
@@ -164,58 +213,22 @@ class createTab(QtWidgets.QMainWindow):
                 else:
                     pass
 
-    def createBox(self, box_name, button_rows):
-        group_box = QtWidgets.QGroupBox(box_name)
-        group_box_layout = QtWidgets.QVBoxLayout()
-        for row in button_rows:
-            group_box_layout.addLayout(self.createRow(row))
-
-        group_box.setLayout(group_box_layout)
-        return(group_box)
-
-    def createRow(self, row):
-        # Create a row with QHBoxLayout
-        row_layout = QtWidgets.QHBoxLayout()
-        row_layout.setSpacing(0)
-
-        # {'name': 'adc1_max', 'type': 'singleText', 'desc': 'ADC1 max val', 'round': '0'}
-        for tool in row:
-            if "comboBox" in tool['type']:
-                tool['list'] = {int(key): value for key, value in tool['list'].items()}
-                entry_item = self.createDropdown(tool['name'], tool['list'], 'None')
-            else:
-                entry_item = self.createKeypad(tool['name'], '')
-
-            row_layout.addWidget(entry_item)
-            self.widgets.append(entry_item)
-            entry_item.mousePressEvent = partial(self.toolMousePressEvent, self.widget_index)
-            self.widget_index = self.widget_index + 1
-
-            # xxx
-            self.entryItem[tool['name']] = {}
-            self.entryItem[tool['name']]['entry_item'] = entry_item
-            if tool.get('round'):
-                self.entryItem[tool['name']]['round'] = tool.get('round')
-
-            row_layout.addSpacing(20)
-
-        row_layout.setAlignment(QtCore.Qt.AlignLeft)
-        return(row_layout)
-
     # connected to tool through mousePressEvent
     def toolMousePressEvent(self, num, event):
         count = 0
-        for t in self.widgets:
+        print(num)
+        for w in self.widgets:
             if count == num:
+                w['widget'].setStyleSheet("background-color: #808B96;" "border :3px solid green;")
                 self.widget_index = count
             else:
-                pass
+                w['widget'].setStyleSheet("background-color: #808B96;" "border :3px solid #ABB2B9;")
             count = count + 1
-        self.openTool()
+        self.openTool() # which one does it open? 
 
     # this happens when user initially selects the tool
     def openTool(self):
-        t = self.widgets[self.widget_index]
+        t = self.widgets[self.widget_index]['widget']
         t.showMenu()
 
     # there are two versions of QToolButtons: a keyboard tool and a dropdown tool 
