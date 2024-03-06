@@ -3,7 +3,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QPlainTextEdit, QTabWidget, QVBoxLayout, QGridLayout, QGroupBox, QRadioButton, QSpacerItem
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
-from PyQt5.QtGui import QKeyEvent, QPalette, QColor
+from PyQt5.QtGui import QKeyEvent, QPalette, QColor, QPainter, QPainterPath
 
 ### Port connection tab -- handles serial connection and sending commands
 ###
@@ -13,16 +13,16 @@ class FirstTab(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.parent = parent
         self.port = parent.port
-        self.statusText = parent.statusBar.statusText
-        self.getButton = parent.statusBar.getButton
-        self.saveButton = parent.statusBar.saveButton
-        self.tButton = parent.statusBar.getButton
+        self.statusText = parent.statusText
+        # self.getButton = parent.getButton
+        # self.saveButton = parent.saveButton
+        if hasattr(parent, 'statusButtonHoverEnter'):
+            self.statusButtonHoverEnter = parent.statusButtonHoverEnter
+        if hasattr(parent, 'statusButtonHoverLeave'):
+            self.statusButtonHoverLeave = parent.statusButtonHoverLeave
         self.serialPayload = parent.serialPayload
         self.port_substring = parent.port_substring
         self.max_chars = 3000
-        self.numerical_pad_status = parent.numerical_pad_status
-        self.customButtonHoverEnter = parent.statusBar.customButtonHoverEnter
-        self.customButtonHoverLeave = parent.statusBar.customButtonHoverLeave
 
         self.initUI()
 
@@ -272,8 +272,10 @@ class SerialSendView(QtWidgets.QWidget):
         self.sendButton.clicked.connect(self.sendButtonClicked)
         self.sendButton.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Preferred)
         s = 'Enter string and send cmd to serial'
-        self.sendButton.enterEvent = lambda event: parent.customButtonHoverEnter(event, s)
-        self.sendButton.leaveEvent = parent.customButtonHoverLeave
+        if hasattr(parent, 'statusButtonHoverEnter'):
+            self.sendButton.enterEvent = lambda event: parent.statusButtonHoverEnter(event, s)
+        if hasattr(parent, 'statusButtonHoverLeave'):
+            self.sendButton.leaveEvent = parent.statusButtonHoverLeave
         
         spacer = QtWidgets.QSpacerItem(400, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
 
@@ -299,16 +301,21 @@ class ToolBar(QtWidgets.QToolBar):
         super(ToolBar, self).__init__(parent)
         
         self.portOpenButton = QtWidgets.QPushButton('Open')
-        self.portOpenButton.enterEvent = lambda event: parent.customButtonHoverEnter(event, "Open or close selected port")
-        self.portOpenButton.leaveEvent = parent.customButtonHoverLeave
-        # self.portOpenButton.setToolTip('attempts serial port open')
+
+
+        if hasattr(parent, 'statusButtonHoverEnter'):
+            self.portOpenButton.enterEvent = lambda event: parent.statusButtonHoverEnter(event, "Open or close selected port")
+        if hasattr(parent, 'statusButtonHoverLeave'):
+            self.portOpenButton.leaveEvent = parent.statusButtonHoverLeave
         self.portOpenButton.setCheckable(True)
         self.portOpenButton.setMinimumHeight(32)
         parent.linkWidget(self.portOpenButton, parent.portOpen)
 
         self.portRefreshButton = QtWidgets.QPushButton('Refresh')
-        self.portRefreshButton.enterEvent = lambda event: parent.customButtonHoverEnter(event, "Refreshes available serial ports")
-        self.portRefreshButton.leaveEvent = parent.customButtonHoverLeave
+        if hasattr(parent, 'statusButtonHoverEnter'):
+            self.portRefreshButton.enterEvent = lambda event: parent.statusButtonHoverEnter(event, "Refreshes available serial ports")
+        if hasattr(parent, 'statusButtonHoverLeave'):
+            self.portRefreshButton.leaveEvent = parent.statusButtonHoverLeave
         self.portRefreshButton.setMinimumHeight(32)
         parent.linkWidget(self.portRefreshButton, parent.portRefresh)
 
@@ -351,3 +358,4 @@ class ToolBar(QtWidgets.QToolBar):
 
     def portName(self):
         return self.portNames.currentText()
+

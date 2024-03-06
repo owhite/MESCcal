@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
+#!/usr/bin/env python3
+
 import sys, re, math, json, platform
 from configparser import ConfigParser
-import Payload, MESCcalModuleLoad, FirstTab, StatusBar, appsTab, createTab, speedoTab
+import Payload, MESCcalModuleLoad, FirstTab, StatusBar, appsTab, createTab
 import aboutTab, howtoTab, presetsTab, ColorSegmentRing
 from keySound import keySound
 from NumericalInputPad import NumericalInputPad
@@ -49,7 +51,7 @@ class MESCcal(QtWidgets.QMainWindow):
             print("Config file not found")
 
         self.useKeypresses = [False]
-
+        self.keyPressSound = [False]
 
         if config.get('Settings', 'use_keypresses') == 'True':
             self.useKeypresses = [True]
@@ -73,7 +75,7 @@ class MESCcal(QtWidgets.QMainWindow):
             self.min_width = 600
             self.min_height = 480
 
-        self.min_width = 800
+        self.min_width = 600
         self.min_height = 480
 
         self.numerical_pad_status = False
@@ -98,13 +100,8 @@ class MESCcal(QtWidgets.QMainWindow):
         self.prevStatusText = ''
 
         self.updateTabs = []
-
-        ### Speedo ### 
         self.tabWidget = QtWidgets.QTabWidget()
-        self.speedoTab = speedoTab.SpeedoTab(self)
-        self.tabWidget.addTab(self.speedoTab, "speedo")
-        self.updateTabs.append(self.speedoTab)
-        
+
         ### First tab opens serial ###
         self.tab_first = FirstTab.FirstTab(self)
         self.tabWidget.addTab(self.tab_first,'Port')
@@ -274,8 +271,10 @@ class MESCcal(QtWidgets.QMainWindow):
 
         # This gets reset when serial data has came in
         if (self.serialPayload.reportTimer()) > 0.2: 
+            # print("stream off")
             self.statusBar.serialButtonOff()
         else:
+            # print("stream on")
             self.statusBar.serialButtonOn()
                 
     def dataEntryButtonClicked(self, name, entryItem):
@@ -329,4 +328,3 @@ if __name__ == '__main__':
     window = MESCcal()
     window.show()
     app.exec()
-

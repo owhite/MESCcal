@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QTextEdit
+from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPainter, QPen, QColor, QFont
 from PyQt5.QtCore import Qt, QRectF, QSize
 
@@ -12,6 +12,10 @@ class colorSegmentRing(QWidget):
         self.value = 8
         self.ring_text = ''
         self.ring_text_size = 10
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+
+        print(self.width())
 
     def setMinMax(self, min, max):
         self.value_min = min

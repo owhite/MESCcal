@@ -8,7 +8,6 @@ class keySound():
         pygame.mixer.music.load('./soundfile.wav')
 
     def key_sound(self, t):
-        print(t)
         if t:
             pygame.mixer.music.play()
 

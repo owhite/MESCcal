@@ -1,81 +1,95 @@
 import re
+import time
+import math
+import colorsys
+import ColorSegmentRing
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QPlainTextEdit, QTabWidget, QVBoxLayout, QGridLayout, QGroupBox, QRadioButton, QSpacerItem
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, QSize
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
-from PyQt5.QtGui import QKeyEvent, QPalette, QColor
+from PyQt5.QtGui import QKeyEvent, QPalette, QColor, QPainter, QPainterPath
 
 ### Port connection tab -- handles serial connection and sending commands
 ###
-class FirstTab(QtWidgets.QMainWindow): 
+class Port(QtWidgets.QMainWindow): 
 
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
-        self.port = parent.port
-        self.statusText = parent.statusBar.statusText
-        self.getButton = parent.statusBar.getButton
-        self.saveButton = parent.statusBar.saveButton
-        self.tButton = parent.statusBar.getButton
         self.serialPayload = parent.serialPayload
         self.port_substring = parent.port_substring
         self.max_chars = 3000
-        self.numerical_pad_status = parent.numerical_pad_status
-        self.customButtonHoverEnter = parent.statusBar.customButtonHoverEnter
-        self.customButtonHoverLeave = parent.statusBar.customButtonHoverLeave
+        self.sound = parent.sound
+        self.keyPressSound = parent.keyPressSound
 
         self.initUI()
 
     def initUI(self):
+        ### Serial stuff ###
+        self.port = QSerialPort()
+        self.timer = QTimer(self) # timers are so helpful
+        self.timer.timeout.connect(self.checkSerialStatus)
+        self.timer.start(50)
+        self.serialStreamingOn = False
+        self.serialWasOn = False
+
+        self.statusText = QtWidgets.QLabel(self)
+
+        self.buttonColor = '#2E4053' 
+
         self.jsonData = QtWidgets.QTextEdit(self) # making this one in the parent
         self.jsonDataView   = jsonDataView(self)
         self.serialDataView = SerialDataView(self) # these make their own QTextEdit boxes
-        self.serialSendView = SerialSendView(self)
 
-        self.widgets = {}
-        self.widget_index = 0
+        self.serialSendView = SerialSendView(self)
+        self.serialSendView.serialSendSignal.connect(self.sendFromPort)
+
+        self.port.readyRead.connect(self.readFromPort)
+
         self.setCentralWidget( QtWidgets.QWidget(self) )
         layout = QtWidgets.QVBoxLayout( self.centralWidget() )
 
-        self.radio_button1 = QtWidgets.QCheckBox('Show json stream')
-        self.linkWidget(self.radio_button1, self.toggle_text_edit)
-        self.jsonData.setVisible(False)
+        self.widgets = {}
+        self.widget_index = 0
 
-        layout.addWidget(self.radio_button1)
-        layout.addWidget(self.jsonDataView) # uncomment to see a json box
+        ### Tool Bar -- top banner on the port tab ###
+        self.toolBar = ToolBar(self)
+        self.addToolBar(self.toolBar)
+        self.portGetButton = self.toolBar.portGetButton
+        self.portOpenButton = self.toolBar.portOpenButton
+        self.portStreamButton = self.toolBar.portStreamButton
+        
+        layout.addWidget(self.jsonDataView)
         layout.addWidget(self.serialDataView)
         layout.addWidget(self.serialSendView)
         layout.setContentsMargins(3, 3, 3, 3)
 
-        ### Tool Bar ###
-        self.toolBar = ToolBar(self)
-        self.addToolBar(self.toolBar)
-        
-        ### Signal Connect ###
-        self.serialSendView.serialSendSignal.connect(self.sendFromPort)
-        self.port.readyRead.connect(self.readFromPort)
-
         self.widget_index = 0
 
-    def linkWidget(self, w, func):
-        if isinstance(w, (QtWidgets.QPushButton, QtWidgets.QCheckBox)) and callable(func):
-            self.widgets[self.widget_index] = {'widget': w, 'function': func}
-
-            if isinstance(w, QtWidgets.QPushButton):
-                try:
-                    w.clicked.connect(func)
-                except TypeError as e:
-                    print(f"Error connecting QPushButton: {e}")
-            elif isinstance(w, QtWidgets.QCheckBox):
-                try:
-                    w.stateChanged.connect(func)
-                except TypeError as e:
-                    print(f"Error connecting QCheckBox: {e}")
-
-            self.widget_index += 1
+    # a timer that checks if anything has recently been transmitted
+    #  and changes colors of the buttons
+    def checkSerialStatus(self):
+        if self.port.isOpen(): 
+            # Green hue = 0.33
+            html_color = self.buttonColorGenerator(frequency=.4, amplitude=0.5, phase_shift=0, hue = 0.33) 
+            self.portOpenButton.setStyleSheet(f'background-color: {html_color};')
+            self.serialWasOn = True
         else:
-            print(f"Warning: Widget {w} or function {func} is not suitable for connection.")
-    
+            self.portOpenButton.setStyleSheet("background-color :  {0};".format(self.buttonColor))
+            if self.serialWasOn:
+                self.statusText.setText('Port died')
+
+        # Tests for reception of json
+        if (self.serialPayload.reportTimer()) > 0.2: 
+            self.portStreamButton.setStyleSheet("background-color : {0};".format(self.buttonColor)) 
+            self.portStreamButton.setChecked(True)
+            self.serialStreamingOn = False
+        else:
+            html_color = self.buttonColorGenerator(frequency=.4, amplitude=0.8, phase_shift=0, hue = 0.77) 
+            self.portStreamButton.setStyleSheet(f'background-color: {html_color};')
+            self.portStreamButton.setChecked(False)
+            self.serialStreamingOn = True
+
     # keypress events not handled in main are handled here
     def keyPressEvent(self, event):
         key = event.key()
@@ -100,17 +114,10 @@ class FirstTab(QtWidgets.QMainWindow):
             else:
                 self.widgets[i]['widget'].clearFocus()
 
-    def toggle_text_edit(self):
-        self.radio_button1.stateChanged.disconnect(self.toggle_text_edit)
-        self.radio_button1.setChecked(not self.radio_button1.isChecked())
-        self.radio_button1.stateChanged.connect(self.toggle_text_edit)
-
-        if self.radio_button1.isChecked():
-            self.jsonData.setVisible(True)
-        else:
-            self.jsonData.setVisible(False)
-
+    # attempts to open port
     def portOpen(self):
+        self.sound.key_sound(self.keyPressSound[0])
+
         if not self.port.isOpen():
             self.port.setBaudRate( self.toolBar.baudRate() )
             self.port.setPortName( self.toolBar.portName() )
@@ -133,8 +140,36 @@ class FirstTab(QtWidgets.QMainWindow):
             self.statusText.setText('Port closed')
             # self.toolBar.serialControlEnable(True)
         
+    # port is open and performs a get
+    def portGet(self):
+        self.sound.key_sound(self.keyPressSound[0])
+
+        if self.port.isOpen():
+            text = 'get\r\n'
+            self.port.write(text.encode())
+        else:
+            print("not open")
+
+    # port is open and starts stream json
+    def portStream(self, checked):
+        self.sound.key_sound(self.keyPressSound[0])
+        if self.port.isOpen():
+            if checked: # then stop things
+                # self.statusText.setText('Serial: no streaming')
+                text = 'status stop\r\n'
+            else:
+                # self.statusText.setText('Serial: streaming')
+                text = 'status json\r\n'
+                self.serialPayload.resetTimer()
+            self.port.write(text.encode())
+        else:
+            pass
+            # self.statusText.setText('Serial: no open')
+
+    # checks  to see if a new port/serial device is on line
     def portRefresh(self):
-        self.statusText.setText('Port refresh')
+        self.sound.key_sound(self.keyPressSound[0])
+        # self.statusText.setText('Port refresh')
         l = []
         count = 0
         for port in [ port.portName() for port in QSerialPortInfo().availablePorts() ]:
@@ -191,6 +226,111 @@ class FirstTab(QtWidgets.QMainWindow):
         self.serialPayload.resetString()
         self.port.write( text.encode() )
         self.serialDataView.appendSerialText( text, QtGui.QColor(0, 0, 255) )
+
+    # checks what type of widget it is, then adds it to our collection of widgets to help
+    #   with navigating by the keys
+    def linkWidget(self, w, func):
+        if isinstance(w, (QtWidgets.QPushButton, QtWidgets.QCheckBox)) and callable(func):
+            self.widgets[self.widget_index] = {'widget': w, 'function': func}
+
+            if isinstance(w, QtWidgets.QPushButton):
+                try:
+                    w.clicked.connect(func)
+                except TypeError as e:
+                    print(f"Error connecting QPushButton: {e}")
+            elif isinstance(w, QtWidgets.QCheckBox):
+                try:
+                    w.stateChanged.connect(func)
+                except TypeError as e:
+                    print(f"Error connecting QCheckBox: {e}")
+
+            self.widget_index += 1
+        else:
+            print(f"Warning: Widget {w} or function {func} is not suitable for connection.")
+
+
+    # colors to make get button throb
+    def buttonColorGenerator(self, frequency, amplitude, phase_shift, hue):
+        current_time = time.time()
+        angle = (2 * math.pi * frequency * current_time) + phase_shift
+        value = (math.sin(angle) + 1) / 2
+        value *= amplitude
+        saturation = 1.0
+        lightness = (1 - value) - .2
+        r, g, b = colorsys.hls_to_rgb(hue, lightness, saturation)
+        html_color = "#{:02X}{:02X}{:02X}".format(int(r * 255), int(g * 255), int(b * 255))
+        return html_color
+
+
+class ToolBar(QtWidgets.QToolBar):
+    def __init__(self, parent):
+        super(ToolBar, self).__init__(parent)
+        
+        self.buttonColor = parent.buttonColor
+
+        self.portOpenButton = QtWidgets.QPushButton('Open')
+        self.portOpenButton.setStyleSheet("background-color : {0};".format(self.buttonColor)) 
+        self.portOpenButton.setCheckable(True)
+        self.portOpenButton.setFixedSize(QSize(50, 50))
+        parent.linkWidget(self.portOpenButton, parent.portOpen)
+
+        self.portGetButton = QtWidgets.QPushButton('Get')
+        self.portGetButton.setStyleSheet("background-color : {0};".format(self.buttonColor)) 
+        self.portGetButton.setFixedSize(QSize(50, 50))
+        parent.linkWidget(self.portGetButton, parent.portGet)
+
+        self.portStreamButton = QtWidgets.QPushButton('Stream')
+        self.portStreamButton.setStyleSheet("background-color : {0};".format(self.buttonColor)) 
+        self.portStreamButton.setCheckable(True)
+        self.portStreamButton.setFixedSize(QSize(60, 50))
+        parent.linkWidget(self.portStreamButton, parent.portStream)
+
+        self.portRefreshButton = QtWidgets.QPushButton('Refresh')
+        self.portRefreshButton.setStyleSheet("background-color : {0};".format(self.buttonColor)) 
+        self.portRefreshButton.setFixedSize(QSize(80, 50))
+        parent.linkWidget(self.portRefreshButton, parent.portRefresh)
+
+        self.portNames = QtWidgets.QComboBox(self)
+        l = []
+        count = 0
+        for port in [ port.portName() for port in QSerialPortInfo().availablePorts() ]:
+            l.append(port)
+            if 'cu.usbmodem' in port:
+                l[count] = l[0]
+                l[0] = port
+            count = count + 1
+
+        self.portNames.addItems( l )
+        self.portNames.setMinimumHeight(32)
+
+        self.baudRates = QtWidgets.QComboBox(self)
+        self.baudRates.addItems([
+            '110', '300', '600', '1200', '2400', '4800', '9600', '14400', '19200', '28800', 
+            '31250', '38400', '51200', '56000', '57600', '76800', '115200', '128000', '230400', '256000', '921600'
+        ])
+        self.baudRates.setCurrentText('115200')
+        self.baudRates.setMinimumHeight(30)
+
+        self.addWidget( self.portOpenButton )
+        self.addWidget( self.portGetButton )
+        self.addWidget( self.portStreamButton )
+        self.addWidget( self.portRefreshButton )
+        self.addWidget( self.portNames )
+        self.addWidget( self.baudRates )
+
+    def serialControlEnable(self, flag):
+        self.portNames.setEnabled(flag)
+        self.baudRates.setEnabled(flag)
+        self.dataBits.setEnabled(flag)
+        self._parity.setEnabled(flag)
+        self.stopBits.setEnabled(flag)
+        self._flowControl.setEnabled(flag)
+        
+    def baudRate(self):
+        return int(self.baudRates.currentText())
+
+    def portName(self):
+        return self.portNames.currentText()
 
 
 class jsonDataView(QtWidgets.QWidget):
@@ -272,8 +412,10 @@ class SerialSendView(QtWidgets.QWidget):
         self.sendButton.clicked.connect(self.sendButtonClicked)
         self.sendButton.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Preferred)
         s = 'Enter string and send cmd to serial'
-        self.sendButton.enterEvent = lambda event: parent.customButtonHoverEnter(event, s)
-        self.sendButton.leaveEvent = parent.customButtonHoverLeave
+        if hasattr(parent, 'statusButtonHoverEnter'):
+            self.sendButton.enterEvent = lambda event: parent.statusButtonHoverEnter(event, s)
+        if hasattr(parent, 'statusButtonHoverLeave'):
+            self.sendButton.leaveEvent = parent.statusButtonHoverLeave
         
         spacer = QtWidgets.QSpacerItem(400, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
 
@@ -294,60 +436,3 @@ class SerialSendView(QtWidgets.QWidget):
         self.port.write( text.encode() )
         self.sendData.clear()
 
-class ToolBar(QtWidgets.QToolBar):
-    def __init__(self, parent):
-        super(ToolBar, self).__init__(parent)
-        
-        self.portOpenButton = QtWidgets.QPushButton('Open')
-        self.portOpenButton.enterEvent = lambda event: parent.customButtonHoverEnter(event, "Open or close selected port")
-        self.portOpenButton.leaveEvent = parent.customButtonHoverLeave
-        # self.portOpenButton.setToolTip('attempts serial port open')
-        self.portOpenButton.setCheckable(True)
-        self.portOpenButton.setMinimumHeight(32)
-        parent.linkWidget(self.portOpenButton, parent.portOpen)
-
-        self.portRefreshButton = QtWidgets.QPushButton('Refresh')
-        self.portRefreshButton.enterEvent = lambda event: parent.customButtonHoverEnter(event, "Refreshes available serial ports")
-        self.portRefreshButton.leaveEvent = parent.customButtonHoverLeave
-        self.portRefreshButton.setMinimumHeight(32)
-        parent.linkWidget(self.portRefreshButton, parent.portRefresh)
-
-        self.portNames = QtWidgets.QComboBox(self)
-        l = []
-        count = 0
-        for port in [ port.portName() for port in QSerialPortInfo().availablePorts() ]:
-            l.append(port)
-            if 'cu.usbmodem' in port:
-                l[count] = l[0]
-                l[0] = port
-            count = count + 1
-
-        self.portNames.addItems( l )
-        self.portNames.setMinimumHeight(32)
-
-        self.baudRates = QtWidgets.QComboBox(self)
-        self.baudRates.addItems([
-            '110', '300', '600', '1200', '2400', '4800', '9600', '14400', '19200', '28800', 
-            '31250', '38400', '51200', '56000', '57600', '76800', '115200', '128000', '230400', '256000', '921600'
-        ])
-        self.baudRates.setCurrentText('115200')
-        self.baudRates.setMinimumHeight(30)
-
-        self.addWidget( self.portOpenButton )
-        self.addWidget( self.portRefreshButton )
-        self.addWidget( self.portNames )
-        self.addWidget( self.baudRates )
-
-    def serialControlEnable(self, flag):
-        self.portNames.setEnabled(flag)
-        self.baudRates.setEnabled(flag)
-        self.dataBits.setEnabled(flag)
-        self._parity.setEnabled(flag)
-        self.stopBits.setEnabled(flag)
-        self._flowControl.setEnabled(flag)
-        
-    def baudRate(self):
-        return int(self.baudRates.currentText())
-
-    def portName(self):
-        return self.portNames.currentText()
